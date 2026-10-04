@@ -1,342 +1,1990 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark">
-<title>Cap or Fact</title>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;700&display=swap" rel="stylesheet">
-<style>
-:root{--blue:#2338ff;--paper:#fffefa;--ink:#0d0d1a;--red:#e5233d;--green:#0a9d58;--yellow:#ffe14d;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;background:var(--blue);color:#fff;font-family:Archivo,system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;user-select:none;touch-action:none}
-#app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;padding:12px 20px 16px}
-header{display:flex;align-items:center;justify-content:space-between}
-h1{font:28px 'Archivo Black',system-ui,sans-serif;margin:0;letter-spacing:-1px;transform:rotate(-2deg)}
-.score{font:700 15px Archivo,system-ui,sans-serif;text-align:right}
-.dots{display:flex;gap:6px;justify-content:flex-end;margin-top:5px;height:12px}
-.dots i{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.28)}
-.dots i.w{background:var(--red)}.dots i.r{background:var(--yellow)}
-#stage{flex:1;position:relative;margin:22px 4px 20px;min-height:0}
-.ghost{position:absolute;inset:0;background:var(--paper);border-radius:10px;opacity:.5}
-.ghost.a{transform:rotate(3deg) translateY(6px)}.ghost.b{transform:rotate(-3deg) translateY(10px);opacity:.3}
-.card{position:absolute;inset:0;background:var(--paper);color:var(--ink);border-radius:10px;padding:26px 24px 22px;display:flex;flex-direction:column;box-shadow:0 14px 0 rgba(0,0,10,.25);touch-action:none;cursor:grab;transform:rotate(-1deg);animation:rise .3s cubic-bezier(.2,1.2,.4,1)}
-.card::before{content:"";position:absolute;top:0;left:24px;width:60px;height:14px;background:var(--yellow);border-radius:0 0 6px 6px}
-.card.drag{transition:none}.card.snap{transition:transform .25s cubic-bezier(.2,1.4,.4,1)}.card.out{transition:transform .38s ease-in}
-@keyframes rise{from{transform:translateY(50px) scale(.94);opacity:0}to{transform:rotate(-1deg);opacity:1}}
-.q{font:clamp(27px,7.6vw,38px)/1.1 'Archivo Black',system-ui,sans-serif;margin:auto 0;letter-spacing:-1px;text-wrap:balance}
-.drag-hint{font:500 14px Archivo,system-ui,sans-serif;color:#6b6b80;text-align:center}
-.lean{position:absolute;top:30px;font:28px 'Archivo Black',system-ui,sans-serif;padding:0 10px;border:4px solid;border-radius:6px;opacity:0}
-.lean.c{right:18px;color:var(--red);transform:rotate(8deg)}.lean.f{left:18px;color:var(--green);transform:rotate(-8deg)}
-.stamp{position:absolute;left:50%;top:34%;font:clamp(64px,22vw,104px) 'Archivo Black',system-ui,sans-serif;padding:0 20px;border:9px solid;border-radius:14px;letter-spacing:-3px;opacity:0;pointer-events:none;mix-blend-mode:multiply}
-.stamp.c{color:var(--red)}.stamp.f{color:var(--green)}
-.stamp.hit{animation:slam .32s cubic-bezier(.3,2,.5,1) forwards}
-@keyframes slam{0%{opacity:0;transform:translate(-50%,-50%) rotate(-14deg) scale(2.6)}100%{opacity:.92;transform:translate(-50%,-50%) rotate(-14deg) scale(1)}}
-.res{display:none;margin-top:auto;border-top:2px dashed #c9c9d6;padding-top:14px}
-.res.on{display:block;animation:fade .3s .25s both}
-@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.res b{display:block;font:18px 'Archivo Black',system-ui,sans-serif;margin-bottom:5px}
-.res p{margin:0;font:500 17px/1.35 Archivo,system-ui,sans-serif}
-.btns{display:flex;gap:12px}
-.btns button{flex:1;height:62px;border:3px solid var(--ink);border-radius:16px;font:22px 'Archivo Black',system-ui,sans-serif;color:var(--ink);background:#fff;box-shadow:0 6px 0 var(--ink);cursor:pointer;transition:transform .08s,box-shadow .08s}
-.btns button:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
-.btns button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
-#bc{background:var(--red);color:#fff}#bf{background:var(--green);color:#fff}
-.btns.res-on #bc,.btns.res-on #bf{display:none}.btns.res-on #bn{display:block}
-#res{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;justify-content:flex-end;padding:28px 24px calc(24px + env(safe-area-inset-bottom,0px));cursor:pointer;touch-action:none}
-#res.on{display:flex;animation:up .34s cubic-bezier(.2,1,.3,1)}
-#res.ok{background:var(--green);color:#03210f}#res.no{background:var(--red);color:#2b0610}
-@keyframes up{from{transform:translateY(70%);opacity:0}to{transform:none;opacity:1}}
-#rm{align-self:flex-start;font:30px 'Archivo Black',system-ui,sans-serif;padding:0 14px;border:6px solid;border-radius:10px;transform:rotate(-6deg);margin-bottom:22px;letter-spacing:-1px}
-#rv{font:clamp(48px,15vw,76px)/.95 'Archivo Black',system-ui,sans-serif;letter-spacing:-3px;margin:0 0 14px}
-#rw{font:500 21px/1.3 Archivo,system-ui,sans-serif;margin:0 0 14px}
-#rs{font:700 16px Archivo,system-ui,sans-serif;margin:0 0 22px}
-#rn{height:64px;border:3px solid var(--ink);border-radius:16px;background:var(--yellow);color:var(--ink);font:22px 'Archivo Black',system-ui,sans-serif;box-shadow:0 6px 0 var(--ink);cursor:pointer}
-#rn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}#rn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-#splash{position:fixed;inset:0;z-index:30;background:var(--yellow);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:24px 24px calc(28px + env(safe-area-inset-bottom,0px));transition:transform .55s cubic-bezier(.7,0,.2,1);touch-action:none}
-#splash.gone{transform:translateY(-105%)}
-.sp-words{display:flex;flex-direction:column;align-items:center;margin-top:auto}
-.sp-words span{font:clamp(84px,30vw,150px)/.9 'Archivo Black',system-ui,sans-serif;letter-spacing:-6px;opacity:0}
-.sp-words .w1{color:var(--red);border:10px solid;border-radius:20px;padding:0 24px 6px;transform:rotate(-7deg);animation:sl .4s .15s cubic-bezier(.3,2,.5,1) forwards;--r:-7deg}
-.sp-words .w2{font-size:clamp(28px,9vw,44px);letter-spacing:0;margin:14px 0;animation:fi .3s .5s forwards}
-.sp-words .w3{color:var(--green);border:10px solid;border-radius:20px;padding:0 24px 6px;transform:rotate(5deg);animation:sl .4s .8s cubic-bezier(.3,2,.5,1) forwards;--r:5deg}
-@keyframes sl{0%{opacity:0;transform:rotate(var(--r)) scale(2.4)}100%{opacity:1;transform:rotate(var(--r)) scale(1)}}
-@keyframes fi{to{opacity:1}}
-.sp-card{margin:34px 0 0;background:var(--paper);border-radius:10px;padding:16px 20px;font:700 18px/1.25 Archivo,system-ui,sans-serif;transform:rotate(-2deg);box-shadow:0 8px 0 rgba(13,13,26,.2);text-align:center;opacity:0;animation:fi .4s 1.2s forwards;max-width:320px}
-#go{margin-top:auto;width:100%;max-width:360px;height:66px;border:3px solid var(--ink);border-radius:18px;background:var(--ink);color:#fff;font:24px 'Archivo Black',system-ui,sans-serif;box-shadow:0 6px 0 rgba(13,13,26,.35);cursor:pointer;opacity:0;animation:fi .4s 1.4s forwards}
-#go:active{transform:translateY(5px)}#go:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
-.sp-note{margin:14px 0 0;font:500 14px Archivo,system-ui,sans-serif;opacity:0;animation:fi .4s 1.5s forwards}
-h1{font-size:clamp(21px,6.4vw,28px)!important}
-header{gap:8px}.score{font-size:14px}#mx{color:var(--yellow)}
-#snd{background:none;border:2px solid rgba(255,255,255,.65);color:#fff;border-radius:99px;font:700 13px Archivo,system-ui,sans-serif;padding:6px 10px;cursor:pointer;margin-left:auto}
-#snd:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
-.cat{position:absolute;top:16px;right:18px;font:700 12px Archivo,system-ui,sans-serif;letter-spacing:.4px;text-transform:uppercase;border:2px solid var(--ink);border-radius:99px;padding:2px 9px}
-#rh{margin:12px 0 0;text-align:center;font:700 13px Archivo,system-ui,sans-serif;opacity:.7}
-#chg{align-self:flex-start;margin:12px 0 0;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.7);color:#fff;border-radius:99px;font:700 14px Archivo,system-ui,sans-serif;padding:6px 14px;cursor:pointer}
-#chg:focus-visible,.tile:focus-visible,#pkx:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
-#pk{position:fixed;inset:0;z-index:25;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 18px calc(12px + env(safe-area-inset-bottom,0px));transition:transform .45s cubic-bezier(.7,0,.2,1)}
-#pk.gone{transform:translateY(105%)}
-.pkh{display:flex;justify-content:space-between;align-items:flex-start;max-width:520px;width:100%;margin:0 auto}
-#pk h2{font:clamp(28px,8vw,36px) 'Archivo Black',system-ui,sans-serif;letter-spacing:-1.5px;margin:6px 0 2px}
-#pk .s{margin:0 auto 12px;max-width:520px;width:100%;font:500 15px Archivo,system-ui,sans-serif;color:#55556a}
-#pkx{display:none;margin-top:8px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:99px;font:700 13px Archivo,system-ui,sans-serif;padding:6px 12px;cursor:pointer}
-#grid{flex:1;overflow-y:auto;touch-action:pan-y;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 4px 18px;align-content:start;max-width:520px;width:100%;margin:0 auto}
-.tile{position:relative;height:100px;border:3px solid var(--ink);border-radius:16px;background:var(--c);text-align:left;padding:12px;font:19px 'Archivo Black',system-ui,sans-serif;color:var(--ink);box-shadow:0 5px 0 var(--ink);cursor:pointer;animation:tin .4s calc(var(--i)*45ms) both}
-.tile small{display:block;font:700 12px Archivo,system-ui,sans-serif;margin-top:4px;opacity:.7}
-.tile .e{position:absolute;right:10px;bottom:6px;font-size:36px;line-height:1}
-.tile:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
-.tile.all{grid-column:1/-1;background:var(--ink);color:#fff;height:84px}
-.tile.all small{opacity:.8}
-@keyframes tin{from{opacity:0;transform:translateY(18px) scale(.95)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.sp-words span,.sp-card,#go,.sp-note{opacity:1!important}*{animation:none!important;transition:none!important}.stamp.hit{opacity:.92;transform:translate(-50%,-50%) rotate(-14deg)}}
-</style>
-</head>
-<body>
-<div id="app">
-  <header>
-    <h1>Cap or Fact</h1>
-    <button id="snd" aria-label="Toggle sound">&#9834; on</button>
-    <div class="score"><span id="sc">0</span> pts &nbsp; streak <span id="st">0</span><b id="mx"></b><div class="dots" id="dots"></div></div>
-  </header>
-  <button id="chg" aria-label="Change category"></button>
-  <div id="stage"><div class="ghost b"></div><div class="ghost a"></div></div>
-  <div class="btns" id="btns">
-    <button id="bc" aria-label="Cap, false">Cap</button>
-    <button id="bf" aria-label="Fact, true">Fact</button>
-  </div>
-</div>
-<div id="res" role="status" aria-live="polite"><div id="rm"></div><h2 id="rv"></h2><p id="rw"></p><p id="rs"></p><button id="rn">Next case</button><p id="rh">Swipe up or tap anywhere</p></div>
-<div id="pk"><div class="pkh"><div><h2>Pick your case</h2></div><button id="pkx">Back to game</button></div><p class="s">Choose a topic, or let us surprise you.</p><div id="grid"></div></div>
-<div id="splash"><div class="sp-words"><span class="w1">Cap</span><span class="w2">or</span><span class="w3">Fact</span></div><p class="sp-card">Honey never spoils. Swipe it left or right and learn why.</p><button id="go">Start playing</button><p class="sp-note">Left is cap. Right is fact.</p><p class="sp-note" id="spb"></p></div>
-<script>
-const C=[
-["Honey never spoils.",1,"Edible honey was found in 3,000-year-old Egyptian tombs. Low water and high acidity keep microbes out."],
-["You can see the Great Wall of China from space with the naked eye.",0,"It's long but narrow. Astronauts say they can't pick it out from orbit."],
-["Octopuses have three hearts.",1,"Two pump blood through the gills, one serves the rest of the body."],
-["Lightning never strikes the same place twice.",0,"The Empire State Building is hit about 20 to 25 times a year."],
-["Bananas are berries, but strawberries aren't.",1,"A botanical berry grows from one flower with one ovary. Bananas qualify."],
-["Humans only use 10% of their brains.",0,"Scans show activity across nearly the whole brain, even in sleep."],
-["Sharks are older than trees.",1,"Sharks date to about 450 million years ago. Trees came roughly 100 million years later."],
-["Goldfish have a three-second memory.",0,"They remember things for months and can be trained."],
-["A day on Venus is longer than its year.",1,"Venus spins once every 243 Earth days and orbits the Sun in 225."],
-["Cracking your knuckles gives you arthritis.",0,"No link has been found. The pop is gas bubbles in the joint fluid."],
-["Wombat poop is cube-shaped.",1,"Their intestines shape it, so it stays put when they mark territory."],
-["Mauna Kea is taller than Everest, base to peak.",1,"Most of it is under the Pacific. From the seafloor it's over 10,000 m."],
-["Bats are blind.",0,"All bats can see. Many also use echolocation."],
-["Oxford University is older than the Aztec Empire.",1,"Teaching at Oxford began around 1096. Tenochtitlan was founded in 1325."],
-["Cleopatra lived closer to the Moon landing than to the building of the Great Pyramid.",1,"The pyramid dates to about 2560 BCE. Cleopatra died in 30 BCE."],
-["Sound travels faster through water than air.",1,"About four times faster, because the molecules are packed closer."],
-["Chameleons change color mainly to blend in.",0,"It's mostly about temperature, mood and signaling."],
-["A penny dropped from a skyscraper can kill someone.",0,"It tumbles and hits at a harmless speed."],
-["Napoleon was unusually short.",0,"He was about 5'6\" or 5'7\", average for his time."],
-["Eating carrots gives you night vision.",0,"The myth came from WWII propaganda covering up radar."],
-["Antarctica is the largest desert on Earth.",1,"Deserts are defined by low precipitation, not heat."],
-["Vikings wore horned helmets into battle.",0,"No horned Viking helmet has been found. The image came from 19th-century opera."],
-["Sloths can hold their breath longer than dolphins.",1,"Sloths can slow their heart and stay under for about 40 minutes."],
-["Different parts of your tongue taste different flavors.",0,"The tongue map is a myth. All tastes register across the whole tongue."],
-["A group of flamingos is called a flamboyance.",1,"It's real, and it fits."],
-["Peanuts are true nuts.",0,"They're legumes, related to beans and lentils."],
-["Venus is the hottest planet in the solar system.",1,"Mercury is closer, but Venus's thick CO2 air traps heat at about 465 C."],
-["Dolphins sleep with half their brain awake.",1,"One hemisphere rests at a time so they can keep surfacing to breathe."],
-["There is no sound in space.",1,"Sound needs a medium to travel through, and space is almost a perfect vacuum.","Space"],
-["Saturn is light enough to float in a big enough bathtub.",1,"Its average density is lower than water's.","Space"],
-["The Moon is slowly drifting away from Earth.",1,"It recedes about 3.8 cm every year.","Space"],
-["Black holes suck in everything around them like vacuum cleaners.",0,"From a distance they pull like any object of the same mass. You have to get very close to be trapped.","Space"],
-["Your outer layer of skin renews itself roughly every month.",1,"Skin cells are made at the bottom and shed from the top in about 4 weeks.","Body"],
-["Babies are born with more bones than adults.",1,"About 300 at birth. Many fuse, leaving adults with 206.","Body"],
-["You lose most of your body heat through your head.",0,"Heat loss follows exposed surface area. The head is just a small part of it.","Body"],
-["Hair and nails keep growing after you die.",0,"The skin dries and pulls back, which only makes them look longer.","Body"],
-["Ancient Roman launderers used urine to clean clothes.",1,"The ammonia in stale urine worked as a cleaning agent. Urine was even taxed.","History"],
-["The Hundred Years' War lasted exactly 100 years.",0,"It ran from 1337 to 1453, which is 116 years.","History"],
-["The Eiffel Tower was only meant to stand for 20 years.",1,"It was built for the 1889 World's Fair and was saved because it made a great radio antenna.","History"],
-["In the Middle Ages, educated people believed the Earth was flat.",0,"Scholars knew it was round. The flat-Earth story spread in the 1800s.","History"],
-["Ketchup was once sold as a medicine.",1,"In the 1830s it was marketed as a cure for indigestion.","Food"],
-["Raw cashew shells contain a skin irritant related to poison ivy's.",1,"That's why cashews are never sold in the shell.","Food"],
-["Spicy food actually burns your tongue.",0,"Capsaicin triggers heat sensors, but it causes no real burn.","Food"],
-["White chocolate contains no cocoa solids.",1,"It's cocoa butter, sugar and milk.","Food"],
-["The Sahara Desert used to be green.",1,"Around 5,000 to 11,000 years ago it had lakes, grass and wildlife.","Earth"],
-["Earth's inner core is about as hot as the Sun's surface.",1,"Roughly 5,200 C, held solid by immense pressure.","Earth"],
-["The earthy smell after rain has its own name: petrichor.",1,"It comes from plant oils and soil compounds released when rain hits dry ground.","Earth"],
-["Hurricanes and typhoons are different kinds of storm.",0,"They're the same thing. The name depends on the ocean where it forms.","Earth"],
-["Water expands when it freezes.",1,"Ice is about 9% less dense than liquid water, which is why it floats.","Science"],
-["Diamonds and graphite are both pure carbon.",1,"Only the arrangement of the atoms differs.","Science"],
-["Atoms are mostly empty space.",1,"The nucleus is tiny compared with the cloud of electrons around it.","Science"],
-["Hot water always freezes faster than cold water.",0,"The Mpemba effect is real only in some conditions, and scientists still debate why.","Science"],
-["Russia spans eleven time zones.",1,"More than any other country.","Geography"],
-["Africa is the only continent in all four hemispheres.",1,"It crosses both the equator and the prime meridian.","Geography"],
-["Australia is wider than the Moon.",1,"It's about 4,000 km across. The Moon is 3,474 km.","Geography"],
-["The capital of Australia is Sydney.",0,"It's Canberra, chosen as a compromise between Sydney and Melbourne.","Geography"],
-["Istanbul sits on two continents.",1,"The Bosphorus strait divides its European and Asian sides.","Geography"],
-["Greenland is bigger than Africa.",0,"Africa is about 14 times larger. Map projections stretch Greenland.","Geography"],
-["The first computer bug was a real moth.",1,"In 1947 a moth jammed a relay in the Harvard Mark II, though engineers already used the word bug.","Tech"],
-["The very first website is still online.",1,"CERN restored info.cern.ch, which went live in 1991.","Tech"],
-["The QWERTY layout was designed to slow typists down.",0,"It was arranged to stop typewriter keys from jamming.","Tech"],
-["Wi-Fi stands for Wireless Fidelity.",0,"It's a brand name that doesn't stand for anything.","Tech"],
-["Email existed before the World Wide Web.",1,"The first network email was sent in 1971. The web arrived in 1989.","Tech"],
-["Your phone is more powerful than the computers that guided Apollo 11.",1,"Apollo's guidance computer had about 4 KB of RAM.","Tech"],
-["Someone has played golf on the Moon.",1,"Astronaut Alan Shepard hit golf balls there in 1971.","Sports"],
-["Basketball was first played with peach baskets.",1,"James Naismith nailed them to a gym balcony in 1891.","Sports"],
-["Tug of war was once an Olympic sport.",1,"It appeared at the Games from 1900 to 1920.","Sports"],
-["The marathon distance comes from the original Greek legend.",0,"26.2 miles was set by the 1908 London Olympics and standardized in 1921.","Sports"],
-["Usain Bolt's 100 m world record is 9.58 seconds.",1,"Set in Berlin in 2009 and still standing.","Sports"],
-["Michael Phelps has won 23 Olympic gold medals.",1,"More than any other athlete in history.","Sports"],
-["English has the most native speakers of any language.",0,"Mandarin Chinese does. English has the most speakers overall.","Language"],
-["Quarantine comes from the Italian for forty days.",1,"Ships waiting out the plague were held for forty days.","Language"],
-["More than 7,000 languages are spoken in the world.",1,"Many are spoken by only a few thousand people.","Language"],
-["Goodbye is a shortened form of God be with ye.",1,"It was worn down over centuries of use.","Language"],
-["The word emoji comes from the English word emotion.",0,"It's Japanese: e for picture and moji for character.","Language"],
-["Papua New Guinea has over 800 languages.",1,"It's the most linguistically diverse country on Earth.","Language"],
-["Multitasking makes you more efficient.",0,"The brain mostly switches quickly between tasks, which costs time and accuracy.","Mind"],
-["Some people are left-brained and others right-brained.",0,"Both hemispheres work together in everyone.","Mind"],
-["Dreams only happen during REM sleep.",0,"They happen in other stages too, just less vividly.","Mind"],
-["Yawning is contagious.",1,"Seeing or hearing a yawn often triggers one.","Mind"],
-["The brain itself can't feel pain.",1,"It has no pain receptors. Headaches come from surrounding tissue.","Mind"],
-["US dollar bills are made of paper.",0,"They're about 75% cotton and 25% linen.","Money"],
-["A US penny costs more than one cent to make.",1,"It costs roughly three cents once metal and production are counted.","Money"],
-["Only 21 million bitcoin can ever exist.",1,"The cap is built into the code.","Money"],
-["Paper money first appeared in China.",1,"It emerged over a thousand years ago during the Tang and Song dynasties.","Money"],
-["Monopoly's ancestor was designed to show the harm of monopolies.",1,"Lizzie Magie created The Landlord's Game in 1904.","Money"],
-["Beethoven wrote some of his greatest works while deaf.",1,"His hearing declined from his late 20s, and he was almost completely deaf by the Ninth Symphony.","Music"],
-["Playing Mozart to babies makes them smarter.",0,"The Mozart effect was never replicated as a lasting boost.","Music"],
-["Vinyl records outsold CDs in the US in 2022.",1,"It was the first time since 1987.","Music"],
-["A cockatoo has been filmed dancing in time to music.",1,"Snowball became famous for keeping the beat.","Music"],
-["A standard piano has 88 keys.",1,"52 white keys and 36 black keys.","Music"],
-["Some snails can sleep for years at a time.",1,"In harsh, dry conditions they seal themselves up and go dormant for long stretches.","Animals"],
-["Elephants are the only mammals that can't jump.",0,"Hippos, rhinos and sloths can't jump either.","Animals"],
-["Crows can recognize human faces and remember them for years.",1,"Studies show they hold grudges against people who threatened them.","Animals"],
-["Ostriches bury their heads in the sand when scared.",0,"They lie flat on the ground to hide, which only looks like burying.","Animals"],
-["A year on Mercury is shorter than 90 Earth days.",1,"Mercury orbits the Sun every 88 Earth days.","Space"],
-["Mars looks red because of rust in its dust.",1,"The dust is rich in iron oxide.","Space"],
-["Your heart beats about 100,000 times a day.",1,"That's roughly 35 million times a year.","Body"],
-["Fingernails grow faster than toenails.",1,"Roughly three times faster.","Body"],
-["The shortest war in history lasted under an hour.",1,"The Anglo-Zanzibar War of 1896 ended in about 40 minutes.","History"],
-["The Egyptian pyramids were built by slaves.",0,"Evidence points to paid, housed and fed workers.","History"],
-["Marie Antoinette said Let them eat cake.",0,"There's no evidence she ever said it. The line was attributed to others earlier.","History"],
-["Pineapples take about two years to grow.",1,"Each plant needs around 18 to 24 months to fruit.","Food"],
-["Carrots were originally purple or yellow, not orange.",1,"Orange carrots were developed by Dutch growers in the 1600s.","Food"],
-["Chocolate is toxic to dogs.",1,"It contains theobromine, which dogs process very slowly.","Food"],
-["About 90% of the world's ice is in Antarctica.",1,"Its ice sheet holds most of the planet's fresh water.","Earth"],
-["Earth is a perfect sphere.",0,"It bulges at the equator because of its spin.","Earth"],
-["The Amazon produces 20% of the world's oxygen.",0,"The forest uses almost as much oxygen as it makes, so the net is close to zero.","Earth"],
-["Bananas are slightly radioactive.",1,"They contain potassium-40, though the dose is harmless.","Science"],
-["Water boils at the same temperature everywhere on Earth.",0,"It boils at lower temperatures at high altitude because the air pressure is lower.","Science"],
-["Helium makes your voice higher because sound travels faster through it.",1,"Your vocal tract resonates at higher frequencies in helium.","Science"],
-["Mount Everest is the point on Earth farthest from the planet's center.",0,"That's Chimborazo in Ecuador. Everest is just highest above sea level.","Geography"],
-["The Nile is the only river that flows north.",0,"Many rivers do, including the Rhine for much of its course.","Geography"],
-["Bolivia has two capitals.",1,"La Paz is the seat of government and Sucre is the constitutional capital.","Geography"],
-["Google began as a Stanford research project called BackRub.",1,"Larry Page and Sergey Brin started it in 1996.","Tech"],
-["Undersea cables carry almost all international internet traffic.",1,"Satellites carry only a tiny share.","Tech"],
-["The first hard drive to hold a gigabyte weighed hundreds of pounds.",1,"IBM's 1980 drive was the size of a fridge.","Tech"],
-["Olympic gold medals are mostly silver.",1,"They're silver covered with about six grams of gold.","Sports"],
-["Dimples help a golf ball fly farther than a smooth one.",1,"They reduce drag and add lift.","Sports"],
-["Brazil has won the most men's World Cups.",1,"Five titles, from 1958 to 2002.","Sports"],
-["The dot over a lowercase i is called a tittle.",1,"It's a real typographic term.","Language"],
-["Sign language is the same everywhere in the world.",0,"There are hundreds of distinct sign languages.","Language"],
-["The word robot comes from a Czech word for forced labor.",1,"Karel Capek's 1920 play popularized it.","Language"],
-["It takes 21 days to form a habit.",0,"One study found it ranged widely, averaging about 66 days.","Mind"],
-["People form first impressions in a fraction of a second.",1,"Studies found judgments about faces form in about a tenth of a second.","Mind"],
-["Most adults need at least seven hours of sleep.",1,"Regularly getting less is linked to health problems.","Mind"],
-["The first credit card was issued by Diners Club.",1,"It launched in 1950 and was used at restaurants.","Money"],
-["Most of the world's money exists only as digital entries.",1,"Physical cash is a small fraction of the total.","Money"],
-["Divide 72 by an interest rate to estimate years to double your money.",1,"That's the Rule of 72.","Money"],
-["John Cage wrote a piece of music that is four minutes thirty-three seconds of silence.",1,"4'33 was first performed in 1952.","Music"],
-["Young people can hear up to about 20,000 Hz.",1,"Hearing range shrinks with age.","Music"],
-["The ukulele originated in Hawaii.",0,"It was adapted from small guitars brought by Portuguese immigrants in the 1800s.","Music"],
-["Putting a wet phone in rice is the best way to dry it.",0,"Rice barely helps. Turn it off and let it air dry.","Hacks"],
-["A wooden spoon across a pot can stop it boiling over.",1,"Bubbles pop when they touch the dry wood, though it only buys you a moment.","Hacks"],
-["The 20-20-20 rule eases eye strain.",1,"Every 20 minutes, look 20 feet away for 20 seconds.","Hacks"],
-["Charging your phone overnight ruins the battery.",0,"Modern phones stop at 100%. Heat does more harm.","Hacks"],
-["Keeping your battery between 20% and 80% helps it last longer.",1,"Less time at the extremes means less wear.","Hacks"],
-["A slice of bread keeps cookies soft.",1,"The cookies pull moisture from the bread.","Hacks"],
-["Storing tomatoes in the fridge dulls their flavor.",1,"Cold breaks down the compounds that give them their taste.","Hacks"],
-["A metal spoon in an open bottle keeps champagne fizzy.",0,"It does nothing. A proper stopper works.","Hacks"],
-["Airplane mode makes your phone charge faster.",1,"Fewer radio signals means less power drain while charging.","Hacks"]
-];
-const CAT=["Food","Space","Animals","Earth","Food","Body","Animals","Animals","Space","Body","Animals","Earth","Animals","History","History","Science","Animals","Science","History","Body","Earth","History","Animals","Body","Animals","Food","Space","Animals"];
-C.forEach((c,i)=>{if(CAT[i])c[3]=CAT[i]});
-const $=s=>document.querySelector(s),stage=$('#stage'),btns=$('#btns');
-const CATS=[["Animals","\u{1F419}","#8af0c0"],["Space","\u{1F680}","#c8a8ff"],["Body","\u{1F4AA}","#ff8fb8"],["History","\u{1F3FA}","#ffe14d"],["Food","\u{1F34C}","#ff9d4d"],["Earth","\u{1F30B}","#8af0c0"],["Science","\u{1F9EA}","#8fd3ff"],["Geography","\u{1F9ED}","#ffe14d"],["Tech","\u{1F4BE}","#8fd3ff"],["Sports","\u{1F3C0}","#ff9d4d"],["Language","\u{1F5E3}\uFE0F","#ff8fb8"],["Mind","\u{1F9E0}","#c8a8ff"],["Money","\u{1F4B8}","#8af0c0"],["Music","\u{1F3A7}","#ffe14d"],["Hacks","\u{1F6E0}\uFE0F","#ff8fb8"]];
-const seen=new Set();let sel='All',started=false,pickerOpen=true;
-const pool=()=>sel==='All'?C:C.filter(c=>c[3]===sel);
-function setSel(){const c=CATS.find(x=>x[0]===sel);$('#chg').textContent=(c?c[1]+' '+c[0]:'\u{1F3B2} Mixed')+' \u00B7 change'}
-function buildPicker(){
-  const g=$('#grid');let h='<button class="tile all" style="--i:0" data-c="All">Surprise me<small>'+C.length+' cards from every topic</small><span class="e">\u{1F3B2}</span></button>';
-  CATS.forEach((c,i)=>{const n=C.filter(x=>x[3]===c[0]).length;h+='<button class="tile" style="--i:'+(i+1)+';--c:'+c[2]+'" data-c="'+c[0]+'">'+c[0]+'<small>'+n+' cards</small><span class="e">'+c[1]+'</span></button>'});
-  g.innerHTML=h;g.onclick=e=>{const t=e.target.closest('.tile');if(t)pick(t.dataset.c)};
-}
-function openPicker(){if(busy||pickerOpen)return;pickerOpen=true;$('#pk').classList.remove('gone')}
-function pick(name){
-  const same=started&&name===sel;pickerOpen=false;$('#pk').classList.add('gone');if(same)return;
-  sel=name;deck=[];setSel();if(card)card.remove();started=true;$('#pkx').style.display='block';nextCard();
-}
-$('#chg').onclick=openPicker;$('#pkx').onclick=()=>{pickerOpen=false;$('#pk').classList.add('gone')};
-let deck=[],cur,card,score=0,streak=0,mult=1,hist=[],busy=false,shown=false,bestS=0,bestH=0,snd=true,ac;
-try{bestS=+localStorage.getItem('cof_bs')||0;bestH=+localStorage.getItem('cof_hs')||0;snd=localStorage.getItem('cof_snd')!=='0'}catch(e){}
-const save=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-function tone(f,d,t,v,at){if(!snd)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.resume)ac.resume();const o=ac.createOscillator(),g=ac.createGain(),n=ac.currentTime+(at||0);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(ac.destination);o.start(n);o.stop(n+d)}catch(e){}}
-addEventListener('pointerdown',()=>{try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.resume)ac.resume()}catch(e){}},{once:true});
-const sfx={thud:()=>tone(90,.18,'square',.2),good:()=>{tone(660,.12,'triangle',.18,.05);tone(880,.2,'triangle',.18,.15)},bad:()=>{tone(180,.25,'sawtooth',.12,.05);tone(130,.3,'sawtooth',.12,.2)},streak:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.14,'triangle',.16,i*.07))};
-const sndLabel=()=>{$('#snd').innerHTML='&#9834; '+(snd?'on':'off')};
-$('#snd').onclick=e=>{e.stopPropagation();snd=!snd;save('cof_snd',snd?1:0);sndLabel();if(snd)sfx.thud()};sndLabel();
-if(bestS||bestH)$('#spb').textContent='Best streak '+bestS+' · High score '+bestH;
-const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-function dots(){$('#dots').innerHTML=Array.from({length:8},(_,i)=>{const h=hist[hist.length-8+i];return '<i class="'+(h===undefined?'':h?'r':'w')+'"></i>'}).join('')}
-function nextCard(){
-  if(!deck.length){let p=pool().filter(c=>!seen.has(c[0]));if(!p.length){pool().forEach(c=>seen.delete(c[0]));p=pool().slice()}deck=shuffle(p)}
-  cur=deck.pop();seen.add(cur[0]);busy=false;shown=false;btns.classList.remove('res-on');
-  card=document.createElement('div');card.className='card';
-  card.innerHTML='<span class="cat"></span><span class="lean c">Cap</span><span class="lean f">Fact</span><p class="q"></p><div class="stamp"></div><div class="drag-hint">Swipe left for cap, right for fact</div>';
-  card.querySelector('.q').textContent=cur[0];card.querySelector('.cat').textContent=cur[3];
-  stage.appendChild(card);bind(card);dots();
-}
-function bind(el){
-  let sx=0,dx=0,on=false;const lc=el.querySelector('.lean.c'),lf=el.querySelector('.lean.f');
-  const mv=x=>{el.style.transform=`translateX(${x}px) rotate(${-1+x/16}deg)`;const p=Math.min(Math.abs(x)/110,1);lf.style.opacity=x>0?p:0;lc.style.opacity=x<0?p:0};
-  el.addEventListener('pointerdown',e=>{if(busy)return;on=true;sx=e.clientX;dx=0;el.classList.remove('snap');el.classList.add('drag');el.setPointerCapture(e.pointerId)});
-  el.addEventListener('pointermove',e=>{if(on){dx=e.clientX-sx;mv(dx)}});
-  const end=()=>{if(!on)return;on=false;el.classList.remove('drag');el.classList.add('snap');
-    const d=dx;mv(0);el.style.transform='rotate(-1deg)';if(Math.abs(d)>90)answer(d>0)};
-  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
-}
-function answer(sayFact){
-  if(busy)return;busy=true;shown=true;
-  const ok=sayFact===!!cur[1];
-  hist.push(ok);
-  let gain=0,newBest=false;
-  if(ok){streak++;mult=Math.min(1+Math.floor(streak/3),5);gain=10*mult;score+=gain;
-    if(streak>=2&&streak>bestS){bestS=streak;newBest=true;save('cof_bs',bestS)}
-    if(score>bestH){bestH=score;save('cof_hs',bestH)}}
-  else{streak=0;mult=1}
-  $('#sc').textContent=score;$('#st').textContent=streak;$('#mx').textContent=mult>1?' x'+mult:'';dots();
-  card.querySelectorAll('.lean').forEach(l=>l.style.opacity=0);
-  card.querySelector('.drag-hint').remove();
-  const s=card.querySelector('.stamp');s.textContent=cur[1]?'Fact':'Cap';s.classList.add(cur[1]?'f':'c','hit');sfx.thud();
-  if(navigator.vibrate)try{navigator.vibrate(ok?15:[30,40,30])}catch(e){}
-  setTimeout(()=>{if(ok)(streak>0&&streak%3===0?sfx.streak:sfx.good)();else sfx.bad()},330);
-  setTimeout(()=>{
-    const r=$('#res');r.className='on '+(ok?'ok':'no');
-    $('#rm').textContent=cur[1]?'Fact':'Cap';
-    $('#rv').textContent=ok?'Called it.':'Busted.';
-    $('#rw').textContent=cur[2];
-    const tier=streak>=10?' Unstoppable.':streak>=5?' On fire.':streak>=3?' Heating up.':'';
-    $('#rs').textContent=ok?(streak>1?streak+' in a row.'+tier:'Streak started.')+' +'+gain+' pts'+(mult>1?' (x'+mult+')':'')+(newBest?' New best streak.':''):'Streak reset. Next one is yours.';
-    $('#rn').focus({preventScroll:true});
-  },700);
-}
-function advance(){
-  if(!shown||!$('#res').classList.contains('on'))return;shown=false;$('#res').className='';const old=card;
-  old.classList.add('out');old.style.transform='translateY(-120vh) rotate(6deg)';
-  setTimeout(()=>old.remove(),400);nextCard();
-}
-$('#bc').onclick=()=>answer(false);$('#bf').onclick=()=>answer(true);$('#rn').onclick=e=>{e.stopPropagation();advance()};$('#res').onclick=advance;let py=0;$('#res').addEventListener('pointerdown',e=>{py=e.clientY});$('#res').addEventListener('pointerup',e=>{if(py-e.clientY>50)advance()});
-const go=()=>$('#splash').classList.add('gone');$('#go').onclick=go;
-addEventListener('keydown',e=>{
-  if(!$('#splash').classList.contains('gone')){if([' ','Enter'].includes(e.key)){e.preventDefault();go()}return}
-  if(pickerOpen)return;
-  if(shown){if([' ','Enter','ArrowUp','ArrowRight'].includes(e.key)){e.preventDefault();advance()}return}
-  if(e.key==='ArrowLeft')answer(false);if(e.key==='ArrowRight')answer(true)});
-buildPicker();setSel();
-</script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark" />
+    <title>Cap or Fact</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --blue: #2338ff;
+        --paper: #fffefa;
+        --ink: #0d0d1a;
+        --red: #e5233d;
+        --green: #0a9d58;
+        --yellow: #ffe14d;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: var(--blue);
+        color: #fff;
+        font-family: Archivo, system-ui, sans-serif;
+        overflow: hidden;
+        overscroll-behavior: none;
+        user-select: none;
+        touch-action: none;
+      }
+      #app {
+        height: 100%;
+        max-width: 520px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        padding: 12px 20px 16px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      h1 {
+        font:
+          28px "Archivo Black",
+          system-ui,
+          sans-serif;
+        margin: 0;
+        letter-spacing: -1px;
+        transform: rotate(-2deg);
+      }
+      .score {
+        font:
+          700 15px Archivo,
+          system-ui,
+          sans-serif;
+        text-align: right;
+      }
+      .dots {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+        margin-top: 5px;
+        height: 12px;
+      }
+      .dots i {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.28);
+      }
+      .dots i.w {
+        background: var(--red);
+      }
+      .dots i.r {
+        background: var(--yellow);
+      }
+      #stage {
+        flex: 1;
+        position: relative;
+        margin: 22px 4px 20px;
+        min-height: 0;
+      }
+      .ghost {
+        position: absolute;
+        inset: 0;
+        background: var(--paper);
+        border-radius: 10px;
+        opacity: 0.5;
+      }
+      .ghost.a {
+        transform: rotate(3deg) translateY(6px);
+      }
+      .ghost.b {
+        transform: rotate(-3deg) translateY(10px);
+        opacity: 0.3;
+      }
+      .card {
+        position: absolute;
+        inset: 0;
+        background: var(--paper);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 26px 24px 22px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 14px 0 rgba(0, 0, 10, 0.25);
+        touch-action: none;
+        cursor: grab;
+        transform: rotate(-1deg);
+        animation: rise 0.3s cubic-bezier(0.2, 1.2, 0.4, 1);
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 24px;
+        width: 60px;
+        height: 14px;
+        background: var(--yellow);
+        border-radius: 0 0 6px 6px;
+      }
+      .card.drag {
+        transition: none;
+      }
+      .card.snap {
+        transition: transform 0.25s cubic-bezier(0.2, 1.4, 0.4, 1);
+      }
+      .card.out {
+        transition: transform 0.38s ease-in;
+      }
+      @keyframes rise {
+        from {
+          transform: translateY(50px) scale(0.94);
+          opacity: 0;
+        }
+        to {
+          transform: rotate(-1deg);
+          opacity: 1;
+        }
+      }
+      .q {
+        font:
+          clamp(27px, 7.6vw, 38px)/1.1 "Archivo Black",
+          system-ui,
+          sans-serif;
+        margin: auto 0;
+        letter-spacing: -1px;
+        text-wrap: balance;
+      }
+      .drag-hint {
+        font:
+          500 14px Archivo,
+          system-ui,
+          sans-serif;
+        color: #6b6b80;
+        text-align: center;
+      }
+      .lean {
+        position: absolute;
+        top: 30px;
+        font:
+          28px "Archivo Black",
+          system-ui,
+          sans-serif;
+        padding: 0 10px;
+        border: 4px solid;
+        border-radius: 6px;
+        opacity: 0;
+      }
+      .lean.c {
+        right: 18px;
+        color: var(--red);
+        transform: rotate(8deg);
+      }
+      .lean.f {
+        left: 18px;
+        color: var(--green);
+        transform: rotate(-8deg);
+      }
+      .stamp {
+        position: absolute;
+        left: 50%;
+        top: 34%;
+        font:
+          clamp(64px, 22vw, 104px) "Archivo Black",
+          system-ui,
+          sans-serif;
+        padding: 0 20px;
+        border: 9px solid;
+        border-radius: 14px;
+        letter-spacing: -3px;
+        opacity: 0;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+      }
+      .stamp.c {
+        color: var(--red);
+      }
+      .stamp.f {
+        color: var(--green);
+      }
+      .stamp.hit {
+        animation: slam 0.32s cubic-bezier(0.3, 2, 0.5, 1) forwards;
+      }
+      @keyframes slam {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) rotate(-14deg) scale(2.6);
+        }
+        100% {
+          opacity: 0.92;
+          transform: translate(-50%, -50%) rotate(-14deg) scale(1);
+        }
+      }
+      .res {
+        display: none;
+        margin-top: auto;
+        border-top: 2px dashed #c9c9d6;
+        padding-top: 14px;
+      }
+      .res.on {
+        display: block;
+        animation: fade 0.3s 0.25s both;
+      }
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .res b {
+        display: block;
+        font:
+          18px "Archivo Black",
+          system-ui,
+          sans-serif;
+        margin-bottom: 5px;
+      }
+      .res p {
+        margin: 0;
+        font:
+          500 17px/1.35 Archivo,
+          system-ui,
+          sans-serif;
+      }
+      .btns {
+        display: flex;
+        gap: 12px;
+      }
+      .btns button {
+        flex: 1;
+        height: 62px;
+        border: 3px solid var(--ink);
+        border-radius: 16px;
+        font:
+          22px "Archivo Black",
+          system-ui,
+          sans-serif;
+        color: var(--ink);
+        background: #fff;
+        box-shadow: 0 6px 0 var(--ink);
+        cursor: pointer;
+        transition:
+          transform 0.08s,
+          box-shadow 0.08s;
+      }
+      .btns button:active {
+        transform: translateY(5px);
+        box-shadow: 0 1px 0 var(--ink);
+      }
+      .btns button:focus-visible {
+        outline: 3px solid var(--yellow);
+        outline-offset: 3px;
+      }
+      #bc {
+        background: var(--red);
+        color: #fff;
+      }
+      #bf {
+        background: var(--green);
+        color: #fff;
+      }
+      .btns.res-on #bc,
+      .btns.res-on #bf {
+        display: none;
+      }
+      .btns.res-on #bn {
+        display: block;
+      }
+      #res {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 28px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+        cursor: pointer;
+        touch-action: none;
+      }
+      #res.on {
+        display: flex;
+        animation: up 0.34s cubic-bezier(0.2, 1, 0.3, 1);
+      }
+      #res.ok {
+        background: var(--green);
+        color: #03210f;
+      }
+      #res.no {
+        background: var(--red);
+        color: #2b0610;
+      }
+      @keyframes up {
+        from {
+          transform: translateY(70%);
+          opacity: 0;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+      #rm {
+        align-self: flex-start;
+        font:
+          30px "Archivo Black",
+          system-ui,
+          sans-serif;
+        padding: 0 14px;
+        border: 6px solid;
+        border-radius: 10px;
+        transform: rotate(-6deg);
+        margin-bottom: 22px;
+        letter-spacing: -1px;
+      }
+      #rv {
+        font:
+          clamp(48px, 15vw, 76px)/0.95 "Archivo Black",
+          system-ui,
+          sans-serif;
+        letter-spacing: -3px;
+        margin: 0 0 14px;
+      }
+      #rw {
+        font:
+          500 21px/1.3 Archivo,
+          system-ui,
+          sans-serif;
+        margin: 0 0 14px;
+      }
+      #rs {
+        font:
+          700 16px Archivo,
+          system-ui,
+          sans-serif;
+        margin: 0 0 22px;
+      }
+      #rn {
+        height: 64px;
+        border: 3px solid var(--ink);
+        border-radius: 16px;
+        background: var(--yellow);
+        color: var(--ink);
+        font:
+          22px "Archivo Black",
+          system-ui,
+          sans-serif;
+        box-shadow: 0 6px 0 var(--ink);
+        cursor: pointer;
+      }
+      #rn:active {
+        transform: translateY(5px);
+        box-shadow: 0 1px 0 var(--ink);
+      }
+      #rn:focus-visible {
+        outline: 3px solid var(--ink);
+        outline-offset: 3px;
+      }
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        background: var(--yellow);
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        padding: 24px 24px calc(28px + env(safe-area-inset-bottom, 0px));
+        transition: transform 0.55s cubic-bezier(0.7, 0, 0.2, 1);
+        touch-action: none;
+      }
+      #splash.gone {
+        transform: translateY(-105%);
+      }
+      .sp-words {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: auto;
+      }
+      .sp-words span {
+        font:
+          clamp(84px, 30vw, 150px)/0.9 "Archivo Black",
+          system-ui,
+          sans-serif;
+        letter-spacing: -6px;
+        opacity: 0;
+      }
+      .sp-words .w1 {
+        color: var(--red);
+        border: 10px solid;
+        border-radius: 20px;
+        padding: 0 24px 6px;
+        transform: rotate(-7deg);
+        animation: sl 0.4s 0.15s cubic-bezier(0.3, 2, 0.5, 1) forwards;
+        --r: -7deg;
+      }
+      .sp-words .w2 {
+        font-size: clamp(28px, 9vw, 44px);
+        letter-spacing: 0;
+        margin: 14px 0;
+        animation: fi 0.3s 0.5s forwards;
+      }
+      .sp-words .w3 {
+        color: var(--green);
+        border: 10px solid;
+        border-radius: 20px;
+        padding: 0 24px 6px;
+        transform: rotate(5deg);
+        animation: sl 0.4s 0.8s cubic-bezier(0.3, 2, 0.5, 1) forwards;
+        --r: 5deg;
+      }
+      @keyframes sl {
+        0% {
+          opacity: 0;
+          transform: rotate(var(--r)) scale(2.4);
+        }
+        100% {
+          opacity: 1;
+          transform: rotate(var(--r)) scale(1);
+        }
+      }
+      @keyframes fi {
+        to {
+          opacity: 1;
+        }
+      }
+      .sp-card {
+        margin: 34px 0 0;
+        background: var(--paper);
+        border-radius: 10px;
+        padding: 16px 20px;
+        font:
+          700 18px/1.25 Archivo,
+          system-ui,
+          sans-serif;
+        transform: rotate(-2deg);
+        box-shadow: 0 8px 0 rgba(13, 13, 26, 0.2);
+        text-align: center;
+        opacity: 0;
+        animation: fi 0.4s 1.2s forwards;
+        max-width: 320px;
+      }
+      #go {
+        margin-top: auto;
+        width: 100%;
+        max-width: 360px;
+        height: 66px;
+        border: 3px solid var(--ink);
+        border-radius: 18px;
+        background: var(--ink);
+        color: #fff;
+        font:
+          24px "Archivo Black",
+          system-ui,
+          sans-serif;
+        box-shadow: 0 6px 0 rgba(13, 13, 26, 0.35);
+        cursor: pointer;
+        opacity: 0;
+        animation: fi 0.4s 1.4s forwards;
+      }
+      #go:active {
+        transform: translateY(5px);
+      }
+      #go:focus-visible {
+        outline: 3px solid var(--blue);
+        outline-offset: 3px;
+      }
+      .sp-note {
+        margin: 14px 0 0;
+        font:
+          500 14px Archivo,
+          system-ui,
+          sans-serif;
+        opacity: 0;
+        animation: fi 0.4s 1.5s forwards;
+      }
+      h1 {
+        font-size: clamp(21px, 6.4vw, 28px) !important;
+      }
+      header {
+        gap: 8px;
+      }
+      .score {
+        font-size: 14px;
+      }
+      #mx {
+        color: var(--yellow);
+      }
+      #snd {
+        background: none;
+        border: 2px solid rgba(255, 255, 255, 0.65);
+        color: #fff;
+        border-radius: 99px;
+        font:
+          700 13px Archivo,
+          system-ui,
+          sans-serif;
+        padding: 6px 10px;
+        cursor: pointer;
+        margin-left: auto;
+      }
+      #snd:focus-visible {
+        outline: 3px solid var(--yellow);
+        outline-offset: 2px;
+      }
+      .cat {
+        position: absolute;
+        top: 16px;
+        right: 18px;
+        font:
+          700 12px Archivo,
+          system-ui,
+          sans-serif;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        border: 2px solid var(--ink);
+        border-radius: 99px;
+        padding: 2px 9px;
+      }
+      #rh {
+        margin: 12px 0 0;
+        text-align: center;
+        font:
+          700 13px Archivo,
+          system-ui,
+          sans-serif;
+        opacity: 0.7;
+      }
+      #chg {
+        align-self: flex-start;
+        margin: 12px 0 0;
+        background: rgba(255, 255, 255, 0.14);
+        border: 2px solid rgba(255, 255, 255, 0.7);
+        color: #fff;
+        border-radius: 99px;
+        font:
+          700 14px Archivo,
+          system-ui,
+          sans-serif;
+        padding: 6px 14px;
+        cursor: pointer;
+      }
+      #chg:focus-visible,
+      .tile:focus-visible,
+      #pkx:focus-visible {
+        outline: 3px solid var(--blue);
+        outline-offset: 3px;
+      }
+      #pk {
+        position: fixed;
+        inset: 0;
+        z-index: 25;
+        background: var(--paper);
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        padding: calc(14px + env(safe-area-inset-top, 0px)) 18px
+          calc(12px + env(safe-area-inset-bottom, 0px));
+        transition: transform 0.45s cubic-bezier(0.7, 0, 0.2, 1);
+      }
+      #pk.gone {
+        transform: translateY(105%);
+      }
+      .pkh {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        max-width: 520px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      #pk h2 {
+        font:
+          clamp(28px, 8vw, 36px) "Archivo Black",
+          system-ui,
+          sans-serif;
+        letter-spacing: -1.5px;
+        margin: 6px 0 2px;
+      }
+      #pk .s {
+        margin: 0 auto 12px;
+        max-width: 520px;
+        width: 100%;
+        font:
+          500 15px Archivo,
+          system-ui,
+          sans-serif;
+        color: #55556a;
+      }
+      #pkx {
+        display: none;
+        margin-top: 8px;
+        border: 2px solid var(--ink);
+        background: var(--paper);
+        color: var(--ink);
+        border-radius: 99px;
+        font:
+          700 13px Archivo,
+          system-ui,
+          sans-serif;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      #grid {
+        flex: 1;
+        overflow-y: auto;
+        touch-action: pan-y;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 4px 4px 18px;
+        align-content: start;
+        max-width: 520px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      .tile {
+        position: relative;
+        height: 100px;
+        border: 3px solid var(--ink);
+        border-radius: 16px;
+        background: var(--c);
+        text-align: left;
+        padding: 12px;
+        font:
+          19px "Archivo Black",
+          system-ui,
+          sans-serif;
+        color: var(--ink);
+        box-shadow: 0 5px 0 var(--ink);
+        cursor: pointer;
+        animation: tin 0.4s calc(var(--i) * 45ms) both;
+      }
+      .tile small {
+        display: block;
+        font:
+          700 12px Archivo,
+          system-ui,
+          sans-serif;
+        margin-top: 4px;
+        opacity: 0.7;
+      }
+      .tile .e {
+        position: absolute;
+        right: 10px;
+        bottom: 6px;
+        font-size: 36px;
+        line-height: 1;
+      }
+      .tile:active {
+        transform: translateY(4px);
+        box-shadow: 0 1px 0 var(--ink);
+      }
+      .tile.all {
+        grid-column: 1/-1;
+        background: var(--ink);
+        color: #fff;
+        height: 84px;
+      }
+      .tile.all small {
+        opacity: 0.8;
+      }
+      @keyframes tin {
+        from {
+          opacity: 0;
+          transform: translateY(18px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .sp-words span,
+        .sp-card,
+        #go,
+        .sp-note {
+          opacity: 1 !important;
+        }
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+        .stamp.hit {
+          opacity: 0.92;
+          transform: translate(-50%, -50%) rotate(-14deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Cap or Fact</h1>
+        <button id="snd" aria-label="Toggle sound">&#9834; on</button>
+        <div class="score">
+          <span id="sc">0</span> pts &nbsp; streak <span id="st">0</span
+          ><b id="mx"></b>
+          <div class="dots" id="dots"></div>
+        </div>
+      </header>
+      <button id="chg" aria-label="Change category"></button>
+      <div id="stage">
+        <div class="ghost b"></div>
+        <div class="ghost a"></div>
+      </div>
+      <div class="btns" id="btns">
+        <button id="bc" aria-label="Cap, false">Cap</button>
+        <button id="bf" aria-label="Fact, true">Fact</button>
+      </div>
+    </div>
+    <div id="res" role="status" aria-live="polite">
+      <div id="rm"></div>
+      <h2 id="rv"></h2>
+      <p id="rw"></p>
+      <p id="rs"></p>
+      <button id="rn">Next case</button>
+      <p id="rh">Swipe up or tap anywhere</p>
+    </div>
+    <div id="pk">
+      <div class="pkh">
+        <div><h2>Pick your case</h2></div>
+        <button id="pkx">Back to game</button>
+      </div>
+      <p class="s">Choose a topic, or let us surprise you.</p>
+      <div id="grid"></div>
+    </div>
+    <div id="splash">
+      <div class="sp-words">
+        <span class="w1">Cap</span><span class="w2">or</span
+        ><span class="w3">Fact</span>
+      </div>
+      <p class="sp-card">
+        Honey never spoils. Swipe it left or right and learn why.
+      </p>
+      <button id="go">Start playing</button>
+      <p class="sp-note">Left is cap. Right is fact.</p>
+      <p class="sp-note" id="spb"></p>
+    </div>
+    <script>
+      const C = [
+        [
+          "Honey never spoils.",
+          1,
+          "Edible honey was found in 3,000-year-old Egyptian tombs. Low water and high acidity keep microbes out.",
+        ],
+        [
+          "You can see the Great Wall of China from space with the naked eye.",
+          0,
+          "It's long but narrow. Astronauts say they can't pick it out from orbit.",
+        ],
+        [
+          "Octopuses have three hearts.",
+          1,
+          "Two pump blood through the gills, one serves the rest of the body.",
+        ],
+        [
+          "Lightning never strikes the same place twice.",
+          0,
+          "The Empire State Building is hit about 20 to 25 times a year.",
+        ],
+        [
+          "Bananas are berries, but strawberries aren't.",
+          1,
+          "A botanical berry grows from one flower with one ovary. Bananas qualify.",
+        ],
+        [
+          "Humans only use 10% of their brains.",
+          0,
+          "Scans show activity across nearly the whole brain, even in sleep.",
+        ],
+        [
+          "Sharks are older than trees.",
+          1,
+          "Sharks date to about 450 million years ago. Trees came roughly 100 million years later.",
+        ],
+        [
+          "Goldfish have a three-second memory.",
+          0,
+          "They remember things for months and can be trained.",
+        ],
+        [
+          "A day on Venus is longer than its year.",
+          1,
+          "Venus spins once every 243 Earth days and orbits the Sun in 225.",
+        ],
+        [
+          "Cracking your knuckles gives you arthritis.",
+          0,
+          "No link has been found. The pop is gas bubbles in the joint fluid.",
+        ],
+        [
+          "Wombat poop is cube-shaped.",
+          1,
+          "Their intestines shape it, so it stays put when they mark territory.",
+        ],
+        [
+          "Mauna Kea is taller than Everest, base to peak.",
+          1,
+          "Most of it is under the Pacific. From the seafloor it's over 10,000 m.",
+        ],
+        ["Bats are blind.", 0, "All bats can see. Many also use echolocation."],
+        [
+          "Oxford University is older than the Aztec Empire.",
+          1,
+          "Teaching at Oxford began around 1096. Tenochtitlan was founded in 1325.",
+        ],
+        [
+          "Cleopatra lived closer to the Moon landing than to the building of the Great Pyramid.",
+          1,
+          "The pyramid dates to about 2560 BCE. Cleopatra died in 30 BCE.",
+        ],
+        [
+          "Sound travels faster through water than air.",
+          1,
+          "About four times faster, because the molecules are packed closer.",
+        ],
+        [
+          "Chameleons change color mainly to blend in.",
+          0,
+          "It's mostly about temperature, mood and signaling.",
+        ],
+        [
+          "A penny dropped from a skyscraper can kill someone.",
+          0,
+          "It tumbles and hits at a harmless speed.",
+        ],
+        [
+          "Napoleon was unusually short.",
+          0,
+          "He was about 5'6\" or 5'7\", average for his time.",
+        ],
+        [
+          "Eating carrots gives you night vision.",
+          0,
+          "The myth came from WWII propaganda covering up radar.",
+        ],
+        [
+          "Antarctica is the largest desert on Earth.",
+          1,
+          "Deserts are defined by low precipitation, not heat.",
+        ],
+        [
+          "Vikings wore horned helmets into battle.",
+          0,
+          "No horned Viking helmet has been found. The image came from 19th-century opera.",
+        ],
+        [
+          "Sloths can hold their breath longer than dolphins.",
+          1,
+          "Sloths can slow their heart and stay under for about 40 minutes.",
+        ],
+        [
+          "Different parts of your tongue taste different flavors.",
+          0,
+          "The tongue map is a myth. All tastes register across the whole tongue.",
+        ],
+        [
+          "A group of flamingos is called a flamboyance.",
+          1,
+          "It's real, and it fits.",
+        ],
+        [
+          "Peanuts are true nuts.",
+          0,
+          "They're legumes, related to beans and lentils.",
+        ],
+        [
+          "Venus is the hottest planet in the solar system.",
+          1,
+          "Mercury is closer, but Venus's thick CO2 air traps heat at about 465 C.",
+        ],
+        [
+          "Dolphins sleep with half their brain awake.",
+          1,
+          "One hemisphere rests at a time so they can keep surfacing to breathe.",
+        ],
+        [
+          "There is no sound in space.",
+          1,
+          "Sound needs a medium to travel through, and space is almost a perfect vacuum.",
+          "Space",
+        ],
+        [
+          "Saturn is light enough to float in a big enough bathtub.",
+          1,
+          "Its average density is lower than water's.",
+          "Space",
+        ],
+        [
+          "The Moon is slowly drifting away from Earth.",
+          1,
+          "It recedes about 3.8 cm every year.",
+          "Space",
+        ],
+        [
+          "Black holes suck in everything around them like vacuum cleaners.",
+          0,
+          "From a distance they pull like any object of the same mass. You have to get very close to be trapped.",
+          "Space",
+        ],
+        [
+          "Your outer layer of skin renews itself roughly every month.",
+          1,
+          "Skin cells are made at the bottom and shed from the top in about 4 weeks.",
+          "Body",
+        ],
+        [
+          "Babies are born with more bones than adults.",
+          1,
+          "About 300 at birth. Many fuse, leaving adults with 206.",
+          "Body",
+        ],
+        [
+          "You lose most of your body heat through your head.",
+          0,
+          "Heat loss follows exposed surface area. The head is just a small part of it.",
+          "Body",
+        ],
+        [
+          "Hair and nails keep growing after you die.",
+          0,
+          "The skin dries and pulls back, which only makes them look longer.",
+          "Body",
+        ],
+        [
+          "Ancient Roman launderers used urine to clean clothes.",
+          1,
+          "The ammonia in stale urine worked as a cleaning agent. Urine was even taxed.",
+          "History",
+        ],
+        [
+          "The Hundred Years' War lasted exactly 100 years.",
+          0,
+          "It ran from 1337 to 1453, which is 116 years.",
+          "History",
+        ],
+        [
+          "The Eiffel Tower was only meant to stand for 20 years.",
+          1,
+          "It was built for the 1889 World's Fair and was saved because it made a great radio antenna.",
+          "History",
+        ],
+        [
+          "In the Middle Ages, educated people believed the Earth was flat.",
+          0,
+          "Scholars knew it was round. The flat-Earth story spread in the 1800s.",
+          "History",
+        ],
+        [
+          "Ketchup was once sold as a medicine.",
+          1,
+          "In the 1830s it was marketed as a cure for indigestion.",
+          "Food",
+        ],
+        [
+          "Raw cashew shells contain a skin irritant related to poison ivy's.",
+          1,
+          "That's why cashews are never sold in the shell.",
+          "Food",
+        ],
+        [
+          "Spicy food actually burns your tongue.",
+          0,
+          "Capsaicin triggers heat sensors, but it causes no real burn.",
+          "Food",
+        ],
+        [
+          "White chocolate contains no cocoa solids.",
+          1,
+          "It's cocoa butter, sugar and milk.",
+          "Food",
+        ],
+        [
+          "The Sahara Desert used to be green.",
+          1,
+          "Around 5,000 to 11,000 years ago it had lakes, grass and wildlife.",
+          "Earth",
+        ],
+        [
+          "Earth's inner core is about as hot as the Sun's surface.",
+          1,
+          "Roughly 5,200 C, held solid by immense pressure.",
+          "Earth",
+        ],
+        [
+          "The earthy smell after rain has its own name: petrichor.",
+          1,
+          "It comes from plant oils and soil compounds released when rain hits dry ground.",
+          "Earth",
+        ],
+        [
+          "Hurricanes and typhoons are different kinds of storm.",
+          0,
+          "They're the same thing. The name depends on the ocean where it forms.",
+          "Earth",
+        ],
+        [
+          "Water expands when it freezes.",
+          1,
+          "Ice is about 9% less dense than liquid water, which is why it floats.",
+          "Science",
+        ],
+        [
+          "Diamonds and graphite are both pure carbon.",
+          1,
+          "Only the arrangement of the atoms differs.",
+          "Science",
+        ],
+        [
+          "Atoms are mostly empty space.",
+          1,
+          "The nucleus is tiny compared with the cloud of electrons around it.",
+          "Science",
+        ],
+        [
+          "Hot water always freezes faster than cold water.",
+          0,
+          "The Mpemba effect is real only in some conditions, and scientists still debate why.",
+          "Science",
+        ],
+        [
+          "Russia spans eleven time zones.",
+          1,
+          "More than any other country.",
+          "Geography",
+        ],
+        [
+          "Africa is the only continent in all four hemispheres.",
+          1,
+          "It crosses both the equator and the prime meridian.",
+          "Geography",
+        ],
+        [
+          "Australia is wider than the Moon.",
+          1,
+          "It's about 4,000 km across. The Moon is 3,474 km.",
+          "Geography",
+        ],
+        [
+          "The capital of Australia is Sydney.",
+          0,
+          "It's Canberra, chosen as a compromise between Sydney and Melbourne.",
+          "Geography",
+        ],
+        [
+          "Istanbul sits on two continents.",
+          1,
+          "The Bosphorus strait divides its European and Asian sides.",
+          "Geography",
+        ],
+        [
+          "Greenland is bigger than Africa.",
+          0,
+          "Africa is about 14 times larger. Map projections stretch Greenland.",
+          "Geography",
+        ],
+        [
+          "The first computer bug was a real moth.",
+          1,
+          "In 1947 a moth jammed a relay in the Harvard Mark II, though engineers already used the word bug.",
+          "Tech",
+        ],
+        [
+          "The very first website is still online.",
+          1,
+          "CERN restored info.cern.ch, which went live in 1991.",
+          "Tech",
+        ],
+        [
+          "The QWERTY layout was designed to slow typists down.",
+          0,
+          "It was arranged to stop typewriter keys from jamming.",
+          "Tech",
+        ],
+        [
+          "Wi-Fi stands for Wireless Fidelity.",
+          0,
+          "It's a brand name that doesn't stand for anything.",
+          "Tech",
+        ],
+        [
+          "Email existed before the World Wide Web.",
+          1,
+          "The first network email was sent in 1971. The web arrived in 1989.",
+          "Tech",
+        ],
+        [
+          "Your phone is more powerful than the computers that guided Apollo 11.",
+          1,
+          "Apollo's guidance computer had about 4 KB of RAM.",
+          "Tech",
+        ],
+        [
+          "Someone has played golf on the Moon.",
+          1,
+          "Astronaut Alan Shepard hit golf balls there in 1971.",
+          "Sports",
+        ],
+        [
+          "Basketball was first played with peach baskets.",
+          1,
+          "James Naismith nailed them to a gym balcony in 1891.",
+          "Sports",
+        ],
+        [
+          "Tug of war was once an Olympic sport.",
+          1,
+          "It appeared at the Games from 1900 to 1920.",
+          "Sports",
+        ],
+        [
+          "The marathon distance comes from the original Greek legend.",
+          0,
+          "26.2 miles was set by the 1908 London Olympics and standardized in 1921.",
+          "Sports",
+        ],
+        [
+          "Usain Bolt's 100 m world record is 9.58 seconds.",
+          1,
+          "Set in Berlin in 2009 and still standing.",
+          "Sports",
+        ],
+        [
+          "Michael Phelps has won 23 Olympic gold medals.",
+          1,
+          "More than any other athlete in history.",
+          "Sports",
+        ],
+        [
+          "English has the most native speakers of any language.",
+          0,
+          "Mandarin Chinese does. English has the most speakers overall.",
+          "Language",
+        ],
+        [
+          "Quarantine comes from the Italian for forty days.",
+          1,
+          "Ships waiting out the plague were held for forty days.",
+          "Language",
+        ],
+        [
+          "More than 7,000 languages are spoken in the world.",
+          1,
+          "Many are spoken by only a few thousand people.",
+          "Language",
+        ],
+        [
+          "Goodbye is a shortened form of God be with ye.",
+          1,
+          "It was worn down over centuries of use.",
+          "Language",
+        ],
+        [
+          "The word emoji comes from the English word emotion.",
+          0,
+          "It's Japanese: e for picture and moji for character.",
+          "Language",
+        ],
+        [
+          "Papua New Guinea has over 800 languages.",
+          1,
+          "It's the most linguistically diverse country on Earth.",
+          "Language",
+        ],
+        [
+          "Multitasking makes you more efficient.",
+          0,
+          "The brain mostly switches quickly between tasks, which costs time and accuracy.",
+          "Mind",
+        ],
+        [
+          "Some people are left-brained and others right-brained.",
+          0,
+          "Both hemispheres work together in everyone.",
+          "Mind",
+        ],
+        [
+          "Dreams only happen during REM sleep.",
+          0,
+          "They happen in other stages too, just less vividly.",
+          "Mind",
+        ],
+        [
+          "Yawning is contagious.",
+          1,
+          "Seeing or hearing a yawn often triggers one.",
+          "Mind",
+        ],
+        [
+          "The brain itself can't feel pain.",
+          1,
+          "It has no pain receptors. Headaches come from surrounding tissue.",
+          "Mind",
+        ],
+        [
+          "US dollar bills are made of paper.",
+          0,
+          "They're about 75% cotton and 25% linen.",
+          "Money",
+        ],
+        [
+          "A US penny costs more than one cent to make.",
+          1,
+          "It costs roughly three cents once metal and production are counted.",
+          "Money",
+        ],
+        [
+          "Only 21 million bitcoin can ever exist.",
+          1,
+          "The cap is built into the code.",
+          "Money",
+        ],
+        [
+          "Paper money first appeared in China.",
+          1,
+          "It emerged over a thousand years ago during the Tang and Song dynasties.",
+          "Money",
+        ],
+        [
+          "Monopoly's ancestor was designed to show the harm of monopolies.",
+          1,
+          "Lizzie Magie created The Landlord's Game in 1904.",
+          "Money",
+        ],
+        [
+          "Beethoven wrote some of his greatest works while deaf.",
+          1,
+          "His hearing declined from his late 20s, and he was almost completely deaf by the Ninth Symphony.",
+          "Music",
+        ],
+        [
+          "Playing Mozart to babies makes them smarter.",
+          0,
+          "The Mozart effect was never replicated as a lasting boost.",
+          "Music",
+        ],
+        [
+          "Vinyl records outsold CDs in the US in 2022.",
+          1,
+          "It was the first time since 1987.",
+          "Music",
+        ],
+        [
+          "A cockatoo has been filmed dancing in time to music.",
+          1,
+          "Snowball became famous for keeping the beat.",
+          "Music",
+        ],
+        [
+          "A standard piano has 88 keys.",
+          1,
+          "52 white keys and 36 black keys.",
+          "Music",
+        ],
+        [
+          "Some snails can sleep for years at a time.",
+          1,
+          "In harsh, dry conditions they seal themselves up and go dormant for long stretches.",
+          "Animals",
+        ],
+        [
+          "Elephants are the only mammals that can't jump.",
+          0,
+          "Hippos, rhinos and sloths can't jump either.",
+          "Animals",
+        ],
+        [
+          "Crows can recognize human faces and remember them for years.",
+          1,
+          "Studies show they hold grudges against people who threatened them.",
+          "Animals",
+        ],
+        [
+          "Ostriches bury their heads in the sand when scared.",
+          0,
+          "They lie flat on the ground to hide, which only looks like burying.",
+          "Animals",
+        ],
+        [
+          "A year on Mercury is shorter than 90 Earth days.",
+          1,
+          "Mercury orbits the Sun every 88 Earth days.",
+          "Space",
+        ],
+        [
+          "Mars looks red because of rust in its dust.",
+          1,
+          "The dust is rich in iron oxide.",
+          "Space",
+        ],
+        [
+          "Your heart beats about 100,000 times a day.",
+          1,
+          "That's roughly 35 million times a year.",
+          "Body",
+        ],
+        [
+          "Fingernails grow faster than toenails.",
+          1,
+          "Roughly three times faster.",
+          "Body",
+        ],
+        [
+          "The shortest war in history lasted under an hour.",
+          1,
+          "The Anglo-Zanzibar War of 1896 ended in about 40 minutes.",
+          "History",
+        ],
+        [
+          "The Egyptian pyramids were built by slaves.",
+          0,
+          "Evidence points to paid, housed and fed workers.",
+          "History",
+        ],
+        [
+          "Marie Antoinette said Let them eat cake.",
+          0,
+          "There's no evidence she ever said it. The line was attributed to others earlier.",
+          "History",
+        ],
+        [
+          "Pineapples take about two years to grow.",
+          1,
+          "Each plant needs around 18 to 24 months to fruit.",
+          "Food",
+        ],
+        [
+          "Carrots were originally purple or yellow, not orange.",
+          1,
+          "Orange carrots were developed by Dutch growers in the 1600s.",
+          "Food",
+        ],
+        [
+          "Chocolate is toxic to dogs.",
+          1,
+          "It contains theobromine, which dogs process very slowly.",
+          "Food",
+        ],
+        [
+          "About 90% of the world's ice is in Antarctica.",
+          1,
+          "Its ice sheet holds most of the planet's fresh water.",
+          "Earth",
+        ],
+        [
+          "Earth is a perfect sphere.",
+          0,
+          "It bulges at the equator because of its spin.",
+          "Earth",
+        ],
+        [
+          "The Amazon produces 20% of the world's oxygen.",
+          0,
+          "The forest uses almost as much oxygen as it makes, so the net is close to zero.",
+          "Earth",
+        ],
+        [
+          "Bananas are slightly radioactive.",
+          1,
+          "They contain potassium-40, though the dose is harmless.",
+          "Science",
+        ],
+        [
+          "Water boils at the same temperature everywhere on Earth.",
+          0,
+          "It boils at lower temperatures at high altitude because the air pressure is lower.",
+          "Science",
+        ],
+        [
+          "Helium makes your voice higher because sound travels faster through it.",
+          1,
+          "Your vocal tract resonates at higher frequencies in helium.",
+          "Science",
+        ],
+        [
+          "Mount Everest is the point on Earth farthest from the planet's center.",
+          0,
+          "That's Chimborazo in Ecuador. Everest is just highest above sea level.",
+          "Geography",
+        ],
+        [
+          "The Nile is the only river that flows north.",
+          0,
+          "Many rivers do, including the Rhine for much of its course.",
+          "Geography",
+        ],
+        [
+          "Bolivia has two capitals.",
+          1,
+          "La Paz is the seat of government and Sucre is the constitutional capital.",
+          "Geography",
+        ],
+        [
+          "Google began as a Stanford research project called BackRub.",
+          1,
+          "Larry Page and Sergey Brin started it in 1996.",
+          "Tech",
+        ],
+        [
+          "Undersea cables carry almost all international internet traffic.",
+          1,
+          "Satellites carry only a tiny share.",
+          "Tech",
+        ],
+        [
+          "The first hard drive to hold a gigabyte weighed hundreds of pounds.",
+          1,
+          "IBM's 1980 drive was the size of a fridge.",
+          "Tech",
+        ],
+        [
+          "Olympic gold medals are mostly silver.",
+          1,
+          "They're silver covered with about six grams of gold.",
+          "Sports",
+        ],
+        [
+          "Dimples help a golf ball fly farther than a smooth one.",
+          1,
+          "They reduce drag and add lift.",
+          "Sports",
+        ],
+        [
+          "Brazil has won the most men's World Cups.",
+          1,
+          "Five titles, from 1958 to 2002.",
+          "Sports",
+        ],
+        [
+          "The dot over a lowercase i is called a tittle.",
+          1,
+          "It's a real typographic term.",
+          "Language",
+        ],
+        [
+          "Sign language is the same everywhere in the world.",
+          0,
+          "There are hundreds of distinct sign languages.",
+          "Language",
+        ],
+        [
+          "The word robot comes from a Czech word for forced labor.",
+          1,
+          "Karel Capek's 1920 play popularized it.",
+          "Language",
+        ],
+        [
+          "It takes 21 days to form a habit.",
+          0,
+          "One study found it ranged widely, averaging about 66 days.",
+          "Mind",
+        ],
+        [
+          "People form first impressions in a fraction of a second.",
+          1,
+          "Studies found judgments about faces form in about a tenth of a second.",
+          "Mind",
+        ],
+        [
+          "Most adults need at least seven hours of sleep.",
+          1,
+          "Regularly getting less is linked to health problems.",
+          "Mind",
+        ],
+        [
+          "The first credit card was issued by Diners Club.",
+          1,
+          "It launched in 1950 and was used at restaurants.",
+          "Money",
+        ],
+        [
+          "Most of the world's money exists only as digital entries.",
+          1,
+          "Physical cash is a small fraction of the total.",
+          "Money",
+        ],
+        [
+          "Divide 72 by an interest rate to estimate years to double your money.",
+          1,
+          "That's the Rule of 72.",
+          "Money",
+        ],
+        [
+          "John Cage wrote a piece of music that is four minutes thirty-three seconds of silence.",
+          1,
+          "4'33 was first performed in 1952.",
+          "Music",
+        ],
+        [
+          "Young people can hear up to about 20,000 Hz.",
+          1,
+          "Hearing range shrinks with age.",
+          "Music",
+        ],
+        [
+          "The ukulele originated in Hawaii.",
+          0,
+          "It was adapted from small guitars brought by Portuguese immigrants in the 1800s.",
+          "Music",
+        ],
+        [
+          "Putting a wet phone in rice is the best way to dry it.",
+          0,
+          "Rice barely helps. Turn it off and let it air dry.",
+          "Hacks",
+        ],
+        [
+          "A wooden spoon across a pot can stop it boiling over.",
+          1,
+          "Bubbles pop when they touch the dry wood, though it only buys you a moment.",
+          "Hacks",
+        ],
+        [
+          "The 20-20-20 rule eases eye strain.",
+          1,
+          "Every 20 minutes, look 20 feet away for 20 seconds.",
+          "Hacks",
+        ],
+        [
+          "Charging your phone overnight ruins the battery.",
+          0,
+          "Modern phones stop at 100%. Heat does more harm.",
+          "Hacks",
+        ],
+        [
+          "Keeping your battery between 20% and 80% helps it last longer.",
+          1,
+          "Less time at the extremes means less wear.",
+          "Hacks",
+        ],
+        [
+          "A slice of bread keeps cookies soft.",
+          1,
+          "The cookies pull moisture from the bread.",
+          "Hacks",
+        ],
+        [
+          "Storing tomatoes in the fridge dulls their flavor.",
+          1,
+          "Cold breaks down the compounds that give them their taste.",
+          "Hacks",
+        ],
+        [
+          "A metal spoon in an open bottle keeps champagne fizzy.",
+          0,
+          "It does nothing. A proper stopper works.",
+          "Hacks",
+        ],
+        [
+          "Airplane mode makes your phone charge faster.",
+          1,
+          "Fewer radio signals means less power drain while charging.",
+          "Hacks",
+        ],
+      ];
+      const CAT = [
+        "Food",
+        "Space",
+        "Animals",
+        "Earth",
+        "Food",
+        "Body",
+        "Animals",
+        "Animals",
+        "Space",
+        "Body",
+        "Animals",
+        "Earth",
+        "Animals",
+        "History",
+        "History",
+        "Science",
+        "Animals",
+        "Science",
+        "History",
+        "Body",
+        "Earth",
+        "History",
+        "Animals",
+        "Body",
+        "Animals",
+        "Food",
+        "Space",
+        "Animals",
+      ];
+      C.forEach((c, i) => {
+        if (CAT[i]) c[3] = CAT[i];
+      });
+      const $ = (s) => document.querySelector(s),
+        stage = $("#stage"),
+        btns = $("#btns");
+      const CATS = [
+        ["Animals", "\u{1F419}", "#8af0c0"],
+        ["Space", "\u{1F680}", "#c8a8ff"],
+        ["Body", "\u{1F4AA}", "#ff8fb8"],
+        ["History", "\u{1F3FA}", "#ffe14d"],
+        ["Food", "\u{1F34C}", "#ff9d4d"],
+        ["Earth", "\u{1F30B}", "#8af0c0"],
+        ["Science", "\u{1F9EA}", "#8fd3ff"],
+        ["Geography", "\u{1F9ED}", "#ffe14d"],
+        ["Tech", "\u{1F4BE}", "#8fd3ff"],
+        ["Sports", "\u{1F3C0}", "#ff9d4d"],
+        ["Language", "\u{1F5E3}\uFE0F", "#ff8fb8"],
+        ["Mind", "\u{1F9E0}", "#c8a8ff"],
+        ["Money", "\u{1F4B8}", "#8af0c0"],
+        ["Music", "\u{1F3A7}", "#ffe14d"],
+        ["Hacks", "\u{1F6E0}\uFE0F", "#ff8fb8"],
+      ];
+      const seen = new Set();
+      let sel = "All",
+        started = false,
+        pickerOpen = true;
+      const pool = () => (sel === "All" ? C : C.filter((c) => c[3] === sel));
+      function setSel() {
+        const c = CATS.find((x) => x[0] === sel);
+        $("#chg").textContent =
+          (c ? c[1] + " " + c[0] : "\u{1F3B2} Mixed") + " \u00B7 change";
+      }
+      function buildPicker() {
+        const g = $("#grid");
+        let h =
+          '<button class="tile all" style="--i:0" data-c="All">Surprise me<small>' +
+          C.length +
+          ' cards from every topic</small><span class="e">\u{1F3B2}</span></button>';
+        CATS.forEach((c, i) => {
+          const n = C.filter((x) => x[3] === c[0]).length;
+          h +=
+            '<button class="tile" style="--i:' +
+            (i + 1) +
+            ";--c:" +
+            c[2] +
+            '" data-c="' +
+            c[0] +
+            '">' +
+            c[0] +
+            "<small>" +
+            n +
+            ' cards</small><span class="e">' +
+            c[1] +
+            "</span></button>";
+        });
+        g.innerHTML = h;
+        g.onclick = (e) => {
+          const t = e.target.closest(".tile");
+          if (t) pick(t.dataset.c);
+        };
+      }
+      function openPicker() {
+        if (busy || pickerOpen) return;
+        pickerOpen = true;
+        $("#pk").classList.remove("gone");
+      }
+      function pick(name) {
+        const same = started && name === sel;
+        pickerOpen = false;
+        $("#pk").classList.add("gone");
+        if (same) return;
+        sel = name;
+        deck = [];
+        setSel();
+        if (card) card.remove();
+        started = true;
+        $("#pkx").style.display = "block";
+        nextCard();
+      }
+      $("#chg").onclick = openPicker;
+      $("#pkx").onclick = () => {
+        pickerOpen = false;
+        $("#pk").classList.add("gone");
+      };
+      let deck = [],
+        cur,
+        card,
+        score = 0,
+        streak = 0,
+        mult = 1,
+        hist = [],
+        busy = false,
+        shown = false,
+        bestS = 0,
+        bestH = 0,
+        snd = true,
+        ac;
+      try {
+        bestS = +localStorage.getItem("cof_bs") || 0;
+        bestH = +localStorage.getItem("cof_hs") || 0;
+        snd = localStorage.getItem("cof_snd") !== "0";
+      } catch (e) {}
+      const save = (k, v) => {
+        try {
+          localStorage.setItem(k, v);
+        } catch (e) {}
+      };
+      function tone(f, d, t, v, at) {
+        if (!snd) return;
+        try {
+          ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+          if (ac.resume) ac.resume();
+          const o = ac.createOscillator(),
+            g = ac.createGain(),
+            n = ac.currentTime + (at || 0);
+          o.type = t;
+          o.frequency.value = f;
+          g.gain.setValueAtTime(v, n);
+          g.gain.exponentialRampToValueAtTime(0.001, n + d);
+          o.connect(g);
+          g.connect(ac.destination);
+          o.start(n);
+          o.stop(n + d);
+        } catch (e) {}
+      }
+      addEventListener(
+        "pointerdown",
+        () => {
+          try {
+            ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+            if (ac.resume) ac.resume();
+          } catch (e) {}
+        },
+        { once: true },
+      );
+      const sfx = {
+        thud: () => tone(90, 0.18, "square", 0.2),
+        good: () => {
+          tone(660, 0.12, "triangle", 0.18, 0.05);
+          tone(880, 0.2, "triangle", 0.18, 0.15);
+        },
+        bad: () => {
+          tone(180, 0.25, "sawtooth", 0.12, 0.05);
+          tone(130, 0.3, "sawtooth", 0.12, 0.2);
+        },
+        streak: () =>
+          [523, 659, 784, 1047].forEach((f, i) =>
+            tone(f, 0.14, "triangle", 0.16, i * 0.07),
+          ),
+      };
+      const sndLabel = () => {
+        $("#snd").innerHTML = "&#9834; " + (snd ? "on" : "off");
+      };
+      $("#snd").onclick = (e) => {
+        e.stopPropagation();
+        snd = !snd;
+        save("cof_snd", snd ? 1 : 0);
+        sndLabel();
+        if (snd) sfx.thud();
+      };
+      sndLabel();
+      if (bestS || bestH)
+        $("#spb").textContent =
+          "Best streak " + bestS + " · High score " + bestH;
+      const shuffle = (a) => {
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = (Math.random() * (i + 1)) | 0;
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      };
+      function dots() {
+        $("#dots").innerHTML = Array.from({ length: 8 }, (_, i) => {
+          const h = hist[hist.length - 8 + i];
+          return (
+            '<i class="' + (h === undefined ? "" : h ? "r" : "w") + '"></i>'
+          );
+        }).join("");
+      }
+      function nextCard() {
+        if (!deck.length) {
+          let p = pool().filter((c) => !seen.has(c[0]));
+          if (!p.length) {
+            pool().forEach((c) => seen.delete(c[0]));
+            p = pool().slice();
+          }
+          deck = shuffle(p);
+        }
+        cur = deck.pop();
+        seen.add(cur[0]);
+        busy = false;
+        shown = false;
+        btns.classList.remove("res-on");
+        card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML =
+          '<span class="cat"></span><span class="lean c">Cap</span><span class="lean f">Fact</span><p class="q"></p><div class="stamp"></div><div class="drag-hint">Swipe left for cap, right for fact</div>';
+        card.querySelector(".q").textContent = cur[0];
+        card.querySelector(".cat").textContent = cur[3];
+        stage.appendChild(card);
+        bind(card);
+        dots();
+      }
+      function bind(el) {
+        let sx = 0,
+          dx = 0,
+          on = false;
+        const lc = el.querySelector(".lean.c"),
+          lf = el.querySelector(".lean.f");
+        const mv = (x) => {
+          el.style.transform = `translateX(${x}px) rotate(${-1 + x / 16}deg)`;
+          const p = Math.min(Math.abs(x) / 110, 1);
+          lf.style.opacity = x > 0 ? p : 0;
+          lc.style.opacity = x < 0 ? p : 0;
+        };
+        el.addEventListener("pointerdown", (e) => {
+          if (busy) return;
+          on = true;
+          sx = e.clientX;
+          dx = 0;
+          el.classList.remove("snap");
+          el.classList.add("drag");
+          el.setPointerCapture(e.pointerId);
+        });
+        el.addEventListener("pointermove", (e) => {
+          if (on) {
+            dx = e.clientX - sx;
+            mv(dx);
+          }
+        });
+        const end = () => {
+          if (!on) return;
+          on = false;
+          el.classList.remove("drag");
+          el.classList.add("snap");
+          const d = dx;
+          mv(0);
+          el.style.transform = "rotate(-1deg)";
+          if (Math.abs(d) > 90) answer(d > 0);
+        };
+        el.addEventListener("pointerup", end);
+        el.addEventListener("pointercancel", end);
+      }
+      function answer(sayFact) {
+        if (busy) return;
+        busy = true;
+        shown = true;
+        const ok = sayFact === !!cur[1];
+        hist.push(ok);
+        let gain = 0,
+          newBest = false;
+        if (ok) {
+          streak++;
+          mult = Math.min(1 + Math.floor(streak / 3), 5);
+          gain = 10 * mult;
+          score += gain;
+          if (streak >= 2 && streak > bestS) {
+            bestS = streak;
+            newBest = true;
+            save("cof_bs", bestS);
+          }
+          if (score > bestH) {
+            bestH = score;
+            save("cof_hs", bestH);
+          }
+        } else {
+          streak = 0;
+          mult = 1;
+        }
+        $("#sc").textContent = score;
+        $("#st").textContent = streak;
+        $("#mx").textContent = mult > 1 ? " x" + mult : "";
+        dots();
+        card.querySelectorAll(".lean").forEach((l) => (l.style.opacity = 0));
+        card.querySelector(".drag-hint").remove();
+        const s = card.querySelector(".stamp");
+        s.textContent = cur[1] ? "Fact" : "Cap";
+        s.classList.add(cur[1] ? "f" : "c", "hit");
+        sfx.thud();
+        if (navigator.vibrate)
+          try {
+            navigator.vibrate(ok ? 15 : [30, 40, 30]);
+          } catch (e) {}
+        setTimeout(() => {
+          if (ok) (streak > 0 && streak % 3 === 0 ? sfx.streak : sfx.good)();
+          else sfx.bad();
+        }, 330);
+        setTimeout(() => {
+          const r = $("#res");
+          r.className = "on " + (ok ? "ok" : "no");
+          $("#rm").textContent = cur[1] ? "Fact" : "Cap";
+          $("#rv").textContent = ok ? "Called it." : "Busted.";
+          $("#rw").textContent = cur[2];
+          const tier =
+            streak >= 10
+              ? " Unstoppable."
+              : streak >= 5
+                ? " On fire."
+                : streak >= 3
+                  ? " Heating up."
+                  : "";
+          $("#rs").textContent = ok
+            ? (streak > 1 ? streak + " in a row." + tier : "Streak started.") +
+              " +" +
+              gain +
+              " pts" +
+              (mult > 1 ? " (x" + mult + ")" : "") +
+              (newBest ? " New best streak." : "")
+            : "Streak reset. Next one is yours.";
+          $("#rn").focus({ preventScroll: true });
+        }, 700);
+      }
+      function advance() {
+        if (!shown || !$("#res").classList.contains("on")) return;
+        shown = false;
+        $("#res").className = "";
+        const old = card;
+        old.classList.add("out");
+        old.style.transform = "translateY(-120vh) rotate(6deg)";
+        setTimeout(() => old.remove(), 400);
+        nextCard();
+      }
+      $("#bc").onclick = () => answer(false);
+      $("#bf").onclick = () => answer(true);
+      $("#rn").onclick = (e) => {
+        e.stopPropagation();
+        advance();
+      };
+      $("#res").onclick = advance;
+      let py = 0;
+      $("#res").addEventListener("pointerdown", (e) => {
+        py = e.clientY;
+      });
+      $("#res").addEventListener("pointerup", (e) => {
+        if (py - e.clientY > 50) advance();
+      });
+      const go = () => $("#splash").classList.add("gone");
+      $("#go").onclick = go;
+      addEventListener("keydown", (e) => {
+        if (!$("#splash").classList.contains("gone")) {
+          if ([" ", "Enter"].includes(e.key)) {
+            e.preventDefault();
+            go();
+          }
+          return;
+        }
+        if (pickerOpen) return;
+        if (shown) {
+          if ([" ", "Enter", "ArrowUp", "ArrowRight"].includes(e.key)) {
+            e.preventDefault();
+            advance();
+          }
+          return;
+        }
+        if (e.key === "ArrowLeft") answer(false);
+        if (e.key === "ArrowRight") answer(true);
+      });
+      buildPicker();
+      setSel();
+    </script>
+  </body>
 </html>
