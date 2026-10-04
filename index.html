@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Cap or Fact</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#2338ff;--paper:#fffefa;--ink:#0d0d1a;--red:#e5233d;--green:#0a9d58;--yellow:#ffe14d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--blue);color:#fff;font-family:Archivo,system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;user-select:none;touch-action:none}
+#app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;padding:12px 20px 16px}
+header{display:flex;align-items:center;justify-content:space-between}
+h1{font:28px 'Archivo Black',system-ui,sans-serif;margin:0;letter-spacing:-1px;transform:rotate(-2deg)}
+.score{font:700 15px Archivo,system-ui,sans-serif;text-align:right}
+.dots{display:flex;gap:6px;justify-content:flex-end;margin-top:5px;height:12px}
+.dots i{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.28)}
+.dots i.w{background:var(--red)}.dots i.r{background:var(--yellow)}
+#stage{flex:1;position:relative;margin:22px 4px 20px;min-height:0}
+.ghost{position:absolute;inset:0;background:var(--paper);border-radius:10px;opacity:.5}
+.ghost.a{transform:rotate(3deg) translateY(6px)}.ghost.b{transform:rotate(-3deg) translateY(10px);opacity:.3}
+.card{position:absolute;inset:0;background:var(--paper);color:var(--ink);border-radius:10px;padding:26px 24px 22px;display:flex;flex-direction:column;box-shadow:0 14px 0 rgba(0,0,10,.25);touch-action:none;cursor:grab;transform:rotate(-1deg);animation:rise .3s cubic-bezier(.2,1.2,.4,1)}
+.card::before{content:"";position:absolute;top:0;left:24px;width:60px;height:14px;background:var(--yellow);border-radius:0 0 6px 6px}
+.card.drag{transition:none}.card.snap{transition:transform .25s cubic-bezier(.2,1.4,.4,1)}.card.out{transition:transform .38s ease-in}
+@keyframes rise{from{transform:translateY(50px) scale(.94);opacity:0}to{transform:rotate(-1deg);opacity:1}}
+.q{font:clamp(27px,7.6vw,38px)/1.1 'Archivo Black',system-ui,sans-serif;margin:auto 0;letter-spacing:-1px;text-wrap:balance}
+.drag-hint{font:500 14px Archivo,system-ui,sans-serif;color:#6b6b80;text-align:center}
+.lean{position:absolute;top:30px;font:28px 'Archivo Black',system-ui,sans-serif;padding:0 10px;border:4px solid;border-radius:6px;opacity:0}
+.lean.c{right:18px;color:var(--red);transform:rotate(8deg)}.lean.f{left:18px;color:var(--green);transform:rotate(-8deg)}
+.stamp{position:absolute;left:50%;top:34%;font:clamp(64px,22vw,104px) 'Archivo Black',system-ui,sans-serif;padding:0 20px;border:9px solid;border-radius:14px;letter-spacing:-3px;opacity:0;pointer-events:none;mix-blend-mode:multiply}
+.stamp.c{color:var(--red)}.stamp.f{color:var(--green)}
+.stamp.hit{animation:slam .32s cubic-bezier(.3,2,.5,1) forwards}
+@keyframes slam{0%{opacity:0;transform:translate(-50%,-50%) rotate(-14deg) scale(2.6)}100%{opacity:.92;transform:translate(-50%,-50%) rotate(-14deg) scale(1)}}
+.res{display:none;margin-top:auto;border-top:2px dashed #c9c9d6;padding-top:14px}
+.res.on{display:block;animation:fade .3s .25s both}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.res b{display:block;font:18px 'Archivo Black',system-ui,sans-serif;margin-bottom:5px}
+.res p{margin:0;font:500 17px/1.35 Archivo,system-ui,sans-serif}
+.btns{display:flex;gap:12px}
+.btns button{flex:1;height:62px;border:3px solid var(--ink);border-radius:16px;font:22px 'Archivo Black',system-ui,sans-serif;color:var(--ink);background:#fff;box-shadow:0 6px 0 var(--ink);cursor:pointer;transition:transform .08s,box-shadow .08s}
+.btns button:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
+.btns button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
+#bc{background:var(--red);color:#fff}#bf{background:var(--green);color:#fff}
+.btns.res-on #bc,.btns.res-on #bf{display:none}.btns.res-on #bn{display:block}
+#res{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;justify-content:flex-end;padding:28px 24px calc(24px + env(safe-area-inset-bottom,0px));cursor:pointer;touch-action:none}
+#res.on{display:flex;animation:up .34s cubic-bezier(.2,1,.3,1)}
+#res.ok{background:var(--green);color:#03210f}#res.no{background:var(--red);color:#2b0610}
+@keyframes up{from{transform:translateY(70%);opacity:0}to{transform:none;opacity:1}}
+#rm{align-self:flex-start;font:30px 'Archivo Black',system-ui,sans-serif;padding:0 14px;border:6px solid;border-radius:10px;transform:rotate(-6deg);margin-bottom:22px;letter-spacing:-1px}
+#rv{font:clamp(48px,15vw,76px)/.95 'Archivo Black',system-ui,sans-serif;letter-spacing:-3px;margin:0 0 14px}
+#rw{font:500 21px/1.3 Archivo,system-ui,sans-serif;margin:0 0 14px}
+#rs{font:700 16px Archivo,system-ui,sans-serif;margin:0 0 22px}
+#rn{height:64px;border:3px solid var(--ink);border-radius:16px;background:var(--yellow);color:var(--ink);font:22px 'Archivo Black',system-ui,sans-serif;box-shadow:0 6px 0 var(--ink);cursor:pointer}
+#rn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}#rn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+#splash{position:fixed;inset:0;z-index:30;background:var(--yellow);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:24px 24px calc(28px + env(safe-area-inset-bottom,0px));transition:transform .55s cubic-bezier(.7,0,.2,1);touch-action:none}
+#splash.gone{transform:translateY(-105%)}
+.sp-words{display:flex;flex-direction:column;align-items:center;margin-top:auto}
+.sp-words span{font:clamp(84px,30vw,150px)/.9 'Archivo Black',system-ui,sans-serif;letter-spacing:-6px;opacity:0}
+.sp-words .w1{color:var(--red);border:10px solid;border-radius:20px;padding:0 24px 6px;transform:rotate(-7deg);animation:sl .4s .15s cubic-bezier(.3,2,.5,1) forwards;--r:-7deg}
+.sp-words .w2{font-size:clamp(28px,9vw,44px);letter-spacing:0;margin:14px 0;animation:fi .3s .5s forwards}
+.sp-words .w3{color:var(--green);border:10px solid;border-radius:20px;padding:0 24px 6px;transform:rotate(5deg);animation:sl .4s .8s cubic-bezier(.3,2,.5,1) forwards;--r:5deg}
+@keyframes sl{0%{opacity:0;transform:rotate(var(--r)) scale(2.4)}100%{opacity:1;transform:rotate(var(--r)) scale(1)}}
+@keyframes fi{to{opacity:1}}
+.sp-card{margin:34px 0 0;background:var(--paper);border-radius:10px;padding:16px 20px;font:700 18px/1.25 Archivo,system-ui,sans-serif;transform:rotate(-2deg);box-shadow:0 8px 0 rgba(13,13,26,.2);text-align:center;opacity:0;animation:fi .4s 1.2s forwards;max-width:320px}
+#go{margin-top:auto;width:100%;max-width:360px;height:66px;border:3px solid var(--ink);border-radius:18px;background:var(--ink);color:#fff;font:24px 'Archivo Black',system-ui,sans-serif;box-shadow:0 6px 0 rgba(13,13,26,.35);cursor:pointer;opacity:0;animation:fi .4s 1.4s forwards}
+#go:active{transform:translateY(5px)}#go:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.sp-note{margin:14px 0 0;font:500 14px Archivo,system-ui,sans-serif;opacity:0;animation:fi .4s 1.5s forwards}
+@media (prefers-reduced-motion:reduce){.sp-words span,.sp-card,#go,.sp-note{opacity:1!important}*{animation:none!important;transition:none!important}.stamp.hit{opacity:.92;transform:translate(-50%,-50%) rotate(-14deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Cap or Fact</h1>
+    <div class="score"><span id="sc">0</span> pts &nbsp; streak <span id="st">0</span><div class="dots" id="dots"></div></div>
+  </header>
+  <div id="stage"><div class="ghost b"></div><div class="ghost a"></div></div>
+  <div class="btns" id="btns">
+    <button id="bc" aria-label="Cap, false">Cap</button>
+    <button id="bf" aria-label="Fact, true">Fact</button>
+  </div>
+</div>
+<div id="res" role="status" aria-live="polite"><div id="rm"></div><h2 id="rv"></h2><p id="rw"></p><p id="rs"></p><button id="rn">Next case</button></div>
+<div id="splash"><div class="sp-words"><span class="w1">Cap</span><span class="w2">or</span><span class="w3">Fact</span></div><p class="sp-card">Honey never spoils. Swipe it left or right and learn why.</p><button id="go">Start playing</button><p class="sp-note">Left is cap. Right is fact.</p></div>
+<script>
+const C=[
+["Honey never spoils.",1,"Edible honey was found in 3,000-year-old Egyptian tombs. Low water and high acidity keep microbes out."],
+["You can see the Great Wall of China from space with the naked eye.",0,"It's long but narrow. Astronauts say they can't pick it out from orbit."],
+["Octopuses have three hearts.",1,"Two pump blood through the gills, one serves the rest of the body."],
+["Lightning never strikes the same place twice.",0,"The Empire State Building is hit about 20 to 25 times a year."],
+["Bananas are berries, but strawberries aren't.",1,"A botanical berry grows from one flower with one ovary. Bananas qualify."],
+["Humans only use 10% of their brains.",0,"Scans show activity across nearly the whole brain, even in sleep."],
+["Sharks are older than trees.",1,"Sharks date to about 450 million years ago. Trees came roughly 100 million years later."],
+["Goldfish have a three-second memory.",0,"They remember things for months and can be trained."],
+["A day on Venus is longer than its year.",1,"Venus spins once every 243 Earth days and orbits the Sun in 225."],
+["Cracking your knuckles gives you arthritis.",0,"No link has been found. The pop is gas bubbles in the joint fluid."],
+["Wombat poop is cube-shaped.",1,"Their intestines shape it, so it stays put when they mark territory."],
+["Mauna Kea is taller than Everest, base to peak.",1,"Most of it is under the Pacific. From the seafloor it's over 10,000 m."],
+["Bats are blind.",0,"All bats can see. Many also use echolocation."],
+["Oxford University is older than the Aztec Empire.",1,"Teaching at Oxford began around 1096. Tenochtitlan was founded in 1325."],
+["Cleopatra lived closer to the Moon landing than to the building of the Great Pyramid.",1,"The pyramid dates to about 2560 BCE. Cleopatra died in 30 BCE."],
+["Sound travels faster through water than air.",1,"About four times faster, because the molecules are packed closer."],
+["Chameleons change color mainly to blend in.",0,"It's mostly about temperature, mood and signaling."],
+["A penny dropped from a skyscraper can kill someone.",0,"It tumbles and hits at a harmless speed."],
+["Napoleon was unusually short.",0,"He was about 5'6\" or 5'7\", average for his time."],
+["Eating carrots gives you night vision.",0,"The myth came from WWII propaganda covering up radar."],
+["Antarctica is the largest desert on Earth.",1,"Deserts are defined by low precipitation, not heat."],
+["Vikings wore horned helmets into battle.",0,"No horned Viking helmet has been found. The image came from 19th-century opera."],
+["Sloths can hold their breath longer than dolphins.",1,"Sloths can slow their heart and stay under for about 40 minutes."],
+["Different parts of your tongue taste different flavors.",0,"The tongue map is a myth. All tastes register across the whole tongue."],
+["A group of flamingos is called a flamboyance.",1,"It's real, and it fits."],
+["Peanuts are true nuts.",0,"They're legumes, related to beans and lentils."],
+["Venus is the hottest planet in the solar system.",1,"Mercury is closer, but Venus's thick CO2 air traps heat at about 465 C."],
+["Dolphins sleep with half their brain awake.",1,"One hemisphere rests at a time so they can keep surfacing to breathe."]
+];
+const $=s=>document.querySelector(s),stage=$('#stage'),btns=$('#btns');
+let deck=[],cur,card,score=0,streak=0,hist=[],busy=false,shown=false;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function dots(){$('#dots').innerHTML=Array.from({length:8},(_,i)=>{const h=hist[hist.length-8+i];return '<i class="'+(h===undefined?'':h?'r':'w')+'"></i>'}).join('')}
+function nextCard(){
+  if(!deck.length)deck=shuffle(C.slice());
+  cur=deck.pop();busy=false;shown=false;btns.classList.remove('res-on');
+  card=document.createElement('div');card.className='card';
+  card.innerHTML='<span class="lean c">Cap</span><span class="lean f">Fact</span><p class="q"></p><div class="stamp"></div><div class="drag-hint">Swipe left for cap, right for fact</div>';
+  card.querySelector('.q').textContent=cur[0];
+  stage.appendChild(card);bind(card);dots();
+}
+function bind(el){
+  let sx=0,dx=0,on=false;const lc=el.querySelector('.lean.c'),lf=el.querySelector('.lean.f');
+  const mv=x=>{el.style.transform=`translateX(${x}px) rotate(${-1+x/16}deg)`;const p=Math.min(Math.abs(x)/110,1);lf.style.opacity=x>0?p:0;lc.style.opacity=x<0?p:0};
+  el.addEventListener('pointerdown',e=>{if(busy)return;on=true;sx=e.clientX;dx=0;el.classList.remove('snap');el.classList.add('drag');el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointermove',e=>{if(on){dx=e.clientX-sx;mv(dx)}});
+  const end=()=>{if(!on)return;on=false;el.classList.remove('drag');el.classList.add('snap');
+    const d=dx;mv(0);el.style.transform='rotate(-1deg)';if(Math.abs(d)>90)answer(d>0)};
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+}
+function answer(sayFact){
+  if(busy)return;busy=true;shown=true;
+  const ok=sayFact===!!cur[1];
+  hist.push(ok);
+  if(ok){streak++;score+=10+Math.min(streak,10)*2}else streak=0;
+  $('#sc').textContent=score;$('#st').textContent=streak;dots();
+  card.querySelectorAll('.lean').forEach(l=>l.style.opacity=0);
+  card.querySelector('.drag-hint').remove();
+  const s=card.querySelector('.stamp');s.textContent=cur[1]?'Fact':'Cap';s.classList.add(cur[1]?'f':'c','hit');
+  if(navigator.vibrate)try{navigator.vibrate(ok?15:[30,40,30])}catch(e){}
+  setTimeout(()=>{
+    const r=$('#res');r.className='on '+(ok?'ok':'no');
+    $('#rm').textContent=cur[1]?'Fact':'Cap';
+    $('#rv').textContent=ok?'Called it.':'Busted.';
+    $('#rw').textContent=cur[2];
+    $('#rs').textContent=ok?(streak>1?streak+' in a row. Keep going.':'Streak started.'):'Streak reset. Next one is yours.';
+    $('#rn').focus({preventScroll:true});
+  },700);
+}
+function advance(){
+  if(!shown||!$('#res').classList.contains('on'))return;shown=false;$('#res').className='';const old=card;
+  old.classList.add('out');old.style.transform='translateY(-120vh) rotate(6deg)';
+  setTimeout(()=>old.remove(),400);nextCard();
+}
+$('#bc').onclick=()=>answer(false);$('#bf').onclick=()=>answer(true);$('#rn').onclick=e=>{e.stopPropagation();advance()};$('#res').onclick=advance;
+const go=()=>$('#splash').classList.add('gone');$('#go').onclick=go;
+addEventListener('keydown',e=>{
+  if(!$('#splash').classList.contains('gone')){if([' ','Enter'].includes(e.key)){e.preventDefault();go()}return}
+  if(shown){if([' ','Enter','ArrowUp','ArrowRight'].includes(e.key)){e.preventDefault();advance()}return}
+  if(e.key==='ArrowLeft')answer(false);if(e.key==='ArrowRight')answer(true)});
+nextCard();
+</script>
+</body>
+</html>
